@@ -1,0 +1,1133 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>أطلس صانع العوالم</title>
+<meta name="theme-color" content="#06111c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-bleed globe; floating brass-trimmed instrument panels; bottom dock is the tool tray (mobile-first), sheets slide up on phone and dock right on desktop */
+:root{
+  --abyss:#06111c; --deep:#0b1c2b; --glass:rgba(9,24,38,.86); --glass2:rgba(14,34,52,.92);
+  --ink:#e8eef0; --mist:#8ea5b3; --dim:#5d7685;
+  --brass:#d6aa5c; --brass2:#f0cf8a; --tide:#45b6cc; --rim:rgba(214,170,92,.22); --rim2:rgba(142,165,179,.18);
+  --good:#5cc496; --warn:#e2b34d; --bad:#e07a6f;
+  --display:"Reem Kufi","Cairo",Tahoma,sans-serif; --body:"Cairo",Tahoma,Arial,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--abyss);color:var(--ink);font-family:var(--body);overscroll-behavior:none}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.app{position:fixed;inset:0;overflow:hidden;user-select:none;-webkit-user-select:none}
+#gl,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gl{touch-action:none}
+#ov{pointer-events:none}
+
+/* top bar */
+.top{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:10px;z-index:6;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px));
+  background:linear-gradient(to bottom,rgba(6,17,28,.92),rgba(6,17,28,0));pointer-events:none}
+.top>*{pointer-events:auto}
+.mark{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;border:1px solid var(--rim);background:var(--glass)}
+.wname{min-width:0;flex:1;display:flex;flex-direction:column;line-height:1.15}
+.wname input{background:none;border:0;padding:0;font-family:var(--display);font-size:18px;color:var(--ink);width:100%;min-width:0;outline:0;text-overflow:ellipsis}
+.lvl{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mist)}
+.lvl b{color:var(--brass2);font-weight:700}
+.xpbar{width:70px;height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brass),var(--brass2));transition:width .4s}
+.seg{display:flex;background:var(--glass);border:1px solid var(--rim2);border-radius:999px;padding:3px;flex:none}
+.seg button{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;color:var(--mist)}
+.seg button.on{background:var(--brass);color:#1b1408}
+.ibtn{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--rim2);color:var(--ink)}
+.ibtn svg{width:20px;height:20px}
+.ibtn.on{border-color:var(--brass);color:var(--brass2);background:var(--glass2)}
+.ibtn:disabled{opacity:.35}
+
+/* side rail */
+.rail{position:absolute;z-index:5;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 70px);display:flex;flex-direction:column;gap:8px}
+.coords{position:absolute;z-index:4;right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 70px);font-size:11px;color:var(--mist);background:var(--glass);border:1px solid var(--rim2);border-radius:999px;padding:5px 10px;font-variant-numeric:tabular-nums;direction:ltr}
+.chron{position:absolute;z-index:4;right:max(12px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 104px);width:min(300px,62vw);display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.chron div{background:var(--glass);border:1px solid var(--rim2);border-right:3px solid var(--brass);border-radius:10px;padding:6px 10px;font-size:11.5px;line-height:1.6;animation:chin .35s ease}
+.chron div small{color:var(--brass2);font-weight:700;margin-left:4px}
+@keyframes chin{from{opacity:0;transform:translateY(-6px)}}
+
+/* dock */
+.dock{position:absolute;z-index:6;left:0;right:0;bottom:0;padding:0 max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(10px,env(safe-area-inset-left,0px));display:flex;justify-content:center;pointer-events:none}
+.tray{pointer-events:auto;width:min(720px,100%);background:var(--glass);border:1px solid var(--rim);border-radius:20px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 40px rgba(0,0,0,.45);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--rim2)}
+.tabs button{flex:1;padding:9px 4px 8px;font-size:12px;font-weight:700;color:var(--mist);position:relative}
+.tabs button.on{color:var(--brass2)}
+.tabs button.on::after{content:"";position:absolute;bottom:-1px;left:25%;right:25%;height:2px;background:var(--brass);border-radius:2px}
+.tools{display:flex;gap:6px;padding:10px;overflow-x:auto;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.tool{flex:1 0 64px;min-width:64px;height:62px;border-radius:14px;border:1px solid var(--rim2);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--mist);transition:.15s}
+.tool svg{width:24px;height:24px}
+.tool.on{border-color:var(--brass);color:var(--ink);background:linear-gradient(160deg,rgba(214,170,92,.22),rgba(214,170,92,.05))}
+.tool.on svg{color:var(--brass2)}
+.brushrow{display:flex;align-items:center;gap:12px;padding:0 12px 10px}
+.brushrow label{display:flex;align-items:center;gap:8px;flex:1;font-size:11px;color:var(--mist);min-width:0}
+.brushrow input[type=range]{flex:1;min-width:0;accent-color:var(--brass);height:28px}
+.cchip{display:flex;align-items:center;gap:8px;margin:0 12px 10px;padding:8px 10px;border-radius:12px;border:1px solid var(--rim2);background:rgba(255,255,255,.03);font-size:12.5px;font-weight:700;width:calc(100% - 24px);text-align:right}
+.cchip .sw{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:13px;color:#fff;flex:none}
+.cchip span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cchip em{font-style:normal;color:var(--brass2);font-size:11.5px}
+
+/* civ tray */
+.timerow{display:flex;align-items:center;gap:8px;padding:10px 12px}
+.play{width:46px;height:46px;border-radius:50%;background:var(--brass);color:#1b1408;display:grid;place-items:center;flex:none}
+.play svg{width:22px;height:22px}
+.year{flex:1;min-width:0}
+.year b{display:block;font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums;line-height:1.1}
+.year small{color:var(--mist);font-size:11px}
+.speed{display:flex;border:1px solid var(--rim2);border-radius:10px;overflow:hidden}
+.speed button{padding:6px 9px;font-size:12px;font-weight:700;color:var(--mist)}
+.speed button.on{background:rgba(214,170,92,.2);color:var(--brass2)}
+.tog{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mist)}
+.tog input{accent-color:var(--brass);width:18px;height:18px}
+.ranks{display:flex;gap:8px;padding:0 10px 10px;overflow-x:auto;scrollbar-width:none}
+.ranks::-webkit-scrollbar{display:none}
+.rank{flex:0 0 152px;border:1px solid var(--rim2);border-radius:14px;padding:8px 10px;text-align:right;background:rgba(255,255,255,.03);display:flex;flex-direction:column;gap:3px}
+.rank.on{border-color:var(--brass)}
+.rank .rh{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12.5px;min-width:0}
+.rank .rh span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .sw{width:18px;height:18px;border-radius:6px;display:grid;place-items:center;font-size:11px;color:#fff;flex:none}
+.rank small{font-size:10.5px;color:var(--mist);font-variant-numeric:tabular-nums}
+.bar{height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
+.bar i{display:block;height:100%}
+.empty{padding:6px 14px 14px;font-size:12px;color:var(--mist);line-height:1.8}
+
+/* sheets */
+.scrim{position:fixed;inset:0;z-index:20;background:rgba(2,8,14,.5);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;z-index:21;left:0;right:0;bottom:0;max-height:82%;display:flex;flex-direction:column;background:var(--deep);border:1px solid var(--rim);border-bottom:0;border-radius:22px 22px 0 0;transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.show{transform:none}
+.sheet .grip{width:42px;height:5px;border-radius:5px;background:rgba(255,255,255,.18);margin:9px auto 2px}
+.sheet header{display:flex;align-items:center;gap:10px;padding:8px 16px 10px}
+.sheet header h2{flex:1;margin:0;font-family:var(--display);font-size:19px;font-weight:700}
+.sheet .body{overflow:auto;padding:4px 16px 18px;-webkit-user-select:text;user-select:text}
+@media(min-width:900px){
+  .sheet{left:auto;right:16px;top:16px;bottom:16px;width:380px;max-height:none;border-radius:20px;border-bottom:1px solid var(--rim);transform:translateX(calc(100% + 30px))}
+  .sheet .grip{display:none}
+  .scrim{background:transparent}
+}
+.h3{font-size:12px;color:var(--brass2);font-weight:800;letter-spacing:.3px;margin:16px 0 8px}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--rim2);border-radius:14px;background:rgba(255,255,255,.025);text-align:right;width:100%}
+.row.on{border-color:var(--brass)}
+.row .sw{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;color:#fff;flex:none}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t small{font-size:11px;color:var(--mist);font-variant-numeric:tabular-nums}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border-radius:12px;border:1px solid var(--rim2);background:rgba(255,255,255,.04);font-size:13px;font-weight:700;min-height:44px}
+.btn.pri{background:var(--brass);border-color:var(--brass);color:#1b1408}
+.btn.danger{color:var(--bad);border-color:rgba(224,122,111,.35)}
+.btn.block{width:100%}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.field>span{font-size:12px;color:var(--mist)}
+.input{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--rim2);background:rgba(255,255,255,.04);font-size:14px;outline:0;color:var(--ink)}
+.input:focus{border-color:var(--brass)}
+.colors{display:flex;flex-wrap:wrap;gap:8px}
+.colors button{width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.15)}
+.colors button.on{border-color:#fff;box-shadow:0 0 0 2px var(--brass)}
+.emblems{display:flex;flex-wrap:wrap;gap:6px}
+.emblems button{width:40px;height:40px;border-radius:10px;border:1px solid var(--rim2);font-size:19px;color:var(--ink)}
+.emblems button.on{border-color:var(--brass);background:rgba(214,170,92,.18)}
+.mission{display:flex;gap:10px;align-items:center;padding:10px;border-radius:14px;border:1px solid var(--rim2)}
+.mission .ck{width:28px;height:28px;border-radius:50%;border:2px solid var(--rim2);display:grid;place-items:center;flex:none;font-size:14px}
+.mission.done{opacity:.6}
+.mission.done .ck{background:var(--good);border-color:var(--good);color:#06111c}
+.mission .t{flex:1;min-width:0}
+.mission b{display:block;font-size:13px}
+.mission small{font-size:11.5px;color:var(--mist)}
+.mission em{font-style:normal;font-size:12px;color:var(--brass2);font-weight:800}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.kv span{color:var(--mist)}
+.kv b{font-variant-numeric:tabular-nums}
+.help p{font-size:13px;line-height:1.9;color:var(--mist);margin:6px 0}
+.help b{color:var(--ink)}
+
+/* popover card */
+.card{position:absolute;z-index:8;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 200px);transform:translateX(-50%);width:min(340px,calc(100% - 24px));background:var(--glass2);border:1px solid var(--rim);border-radius:16px;padding:12px 14px;box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.card h4{margin:0 0 8px;font-family:var(--display);font-size:17px;display:flex;align-items:center;gap:8px}
+.card h4 span{flex:1}
+.card .acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.card .acts .btn{flex:1;min-height:40px;padding:8px 10px;font-size:12px}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;background:rgba(2,8,14,.6)}
+.dialog{width:min(420px,100%);background:var(--deep);border:1px solid var(--rim);border-radius:20px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.6);max-height:90%;overflow:auto}
+.dialog h3{margin:0 0 6px;font-family:var(--display);font-size:19px}
+.dialog p{margin:0 0 12px;color:var(--mist);font-size:13px;line-height:1.8}
+.dialog .acts{display:flex;gap:8px;margin-top:14px}
+.dialog .acts .btn{flex:1}
+.dialog img{width:100%;border-radius:12px;border:1px solid var(--rim2);display:block;-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
+
+.toast{position:fixed;z-index:40;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 215px);transform:translate(-50%,10px);background:var(--glass2);border:1px solid var(--rim);color:var(--ink);padding:9px 16px;border-radius:999px;font-size:13px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.lvlup{position:fixed;z-index:41;inset:0;display:grid;place-items:center;pointer-events:none}
+.lvlup div{background:radial-gradient(circle,rgba(214,170,92,.3),transparent 70%);padding:40px 60px;text-align:center;animation:pop 2.4s ease forwards}
+.lvlup b{display:block;font-family:var(--display);font-size:34px;color:var(--brass2);text-shadow:0 2px 20px rgba(214,170,92,.6)}
+.lvlup small{font-size:14px;color:var(--ink)}
+@keyframes pop{0%{opacity:0;transform:scale(.7)}15%{opacity:1;transform:scale(1.05)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+
+/* start screen */
+.start{position:fixed;inset:0;z-index:25;display:flex;align-items:flex-end;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));background:linear-gradient(to top,rgba(6,17,28,.96) 30%,rgba(6,17,28,.2) 75%,rgba(6,17,28,.55))}
+@media(min-width:900px){.start{align-items:center;justify-content:flex-start;padding-right:7vw;background:linear-gradient(to left,rgba(6,17,28,.95) 30%,rgba(6,17,28,.1) 70%)}}
+.startbox{width:min(440px,100%);max-height:100%;overflow:auto;scrollbar-width:none}
+.startbox::-webkit-scrollbar{display:none}
+.logo{font-family:var(--display);font-size:52px;line-height:1;color:var(--brass2);letter-spacing:1px;margin:0}
+.logo small{display:block;font-family:var(--body);font-size:13px;letter-spacing:4px;color:var(--mist);margin-top:8px;font-weight:600}
+.tag{color:var(--mist);font-size:14px;line-height:1.8;margin:10px 0 16px}
+.presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.preset{border:1px solid var(--rim2);border-radius:14px;padding:10px 6px;font-size:12px;font-weight:700;color:var(--mist);background:rgba(255,255,255,.03);display:flex;flex-direction:column;align-items:center;gap:6px}
+.preset canvas{width:44px;height:44px;border-radius:50%}
+.preset.on{border-color:var(--brass);color:var(--ink);background:rgba(214,170,92,.12)}
+.seedrow{display:flex;gap:8px;margin:10px 0;align-items:center}
+.seedrow .input{flex:1;direction:ltr;text-align:left;font-variant-numeric:tabular-nums}
+.saves{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.saves .row img{width:44px;height:44px;border-radius:50%;flex:none;background:#0b2c4a}
+.busy{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:rgba(6,17,28,.7);font-family:var(--display);font-size:18px;color:var(--brass2)}
+.busy div{display:flex;flex-direction:column;align-items:center;gap:14px}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(214,170,92,.2);border-top-color:var(--brass);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.glfail{position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--mist);z-index:60;background:var(--abyss)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:420px){.seg button{padding:6px 9px}.wname input{font-size:16px}.xpbar{width:46px}}
+</style>
+
+<div class="app" id="app">
+  <canvas id="gl"></canvas>
+  <canvas id="ov"></canvas>
+
+  <div class="top">
+    <button class="mark" id="menuBtn" aria-label="القائمة">
+      <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="#d6aa5c" stroke-width="1.4"><circle cx="16" cy="16" r="11.5"/><path d="M16 3v26M3 16h26" stroke-opacity=".35"/><path d="M16 6l2.6 10L16 26l-2.6-10z" fill="#d6aa5c" fill-opacity=".85" stroke="none"/><path d="M6 16l10-2.2L26 16l-10 2.2z" fill="#45b6cc" fill-opacity=".7" stroke="none"/></svg>
+    </button>
+    <div class="wname">
+      <input id="worldName" maxlength="32" aria-label="اسم العالم" value="عالمي">
+      <div class="lvl"><span>المستوى <b id="lvlNum">1</b></span><span class="xpbar"><i id="xpFill"></i></span><span id="lvlTitle">رحّالة</span></div>
+    </div>
+    <div class="seg" role="tablist">
+      <button id="modeBuild" class="on">بناء</button>
+      <button id="modeCiv">حضارة</button>
+    </div>
+    <button class="ibtn" id="questBtn" aria-label="المهام"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10v4a5 5 0 0 1-10 0z"/><path d="M7 5H4v1a3 3 0 0 0 3 3M17 5h3v1a3 3 0 0 1-3 3M12 12v4M8 21h8M9 16h6v5H9z"/></svg></button>
+  </div>
+
+  <div class="rail">
+    <button class="ibtn" id="undoBtn" aria-label="تراجع" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+    <button class="ibtn" id="redoBtn" aria-label="إعادة" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+    <button class="ibtn" id="handBtn" aria-label="وضع التدوير"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12M11 11.5v-7a1.5 1.5 0 0 1 3 0V12M14 6.5a1.5 1.5 0 0 1 3 0V12M17 8.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-2a6 6 0 0 1-4.6-2.2L4 14.5a1.6 1.6 0 0 1 2.4-2L8 14"/></svg></button>
+    <button class="ibtn" id="homeBtn" aria-label="إعادة العرض"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg></button>
+    <button class="ibtn" id="gridBtn" aria-label="شبكة الإحداثيات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18M5 7h14M5 17h14"/></svg></button>
+  </div>
+  <div class="coords" id="coords">— · —</div>
+  <div class="chron" id="chron"></div>
+
+  <div class="dock">
+    <div class="tray" id="buildTray">
+      <div class="tabs" id="tabs"></div>
+      <div class="tools" id="tools"></div>
+      <button class="cchip" id="countryChip" hidden><i class="sw" id="chipSw"></i><span id="chipName">لا توجد دولة</span><em>تغيير</em></button>
+      <div class="brushrow" id="brushRow">
+        <label><span>الحجم</span><input id="bSize" type="range" min="0.6" max="22" step="0.2" value="6"></label>
+        <label><span>القوة</span><input id="bStr" type="range" min="0.15" max="1" step="0.05" value="0.6"></label>
+      </div>
+    </div>
+    <div class="tray" id="civTray" hidden>
+      <div class="timerow">
+        <button class="play" id="playBtn" aria-label="تشغيل الزمن"><svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+        <div class="year"><b id="yearTxt">السنة 0</b><small id="eraTxt">قبل فجر التاريخ</small></div>
+        <div class="speed" id="speed"><button data-s="1" class="on">1×</button><button data-s="2">2×</button><button data-s="4">4×</button></div>
+      </div>
+      <div class="timerow" style="padding-top:0;gap:14px">
+        <label class="tog"><input type="checkbox" id="expandTog" checked> توسّع تلقائي</label>
+        <label class="tog"><input type="checkbox" id="warTog" checked> نزاعات حدودية</label>
+        <button class="btn" id="civCountries" style="margin-inline-start:auto;min-height:36px;padding:6px 12px;font-size:12px">الدول</button>
+      </div>
+      <div class="ranks" id="ranks"></div>
+    </div>
+  </div>
+
+  <div class="card" id="card" hidden></div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<section class="sheet" id="menuSheet" aria-label="القائمة">
+  <div class="grip"></div>
+  <header><h2>أطلس</h2><button class="ibtn" data-close aria-label="إغلاق">✕</button></header>
+  <div class="body">
+    <div class="grid2">
+      <button class="btn pri" id="mSave">حفظ الآن</button>
+      <button class="btn" id="mStart">عوالمي / عالم جديد</button>
+      <button class="btn" id="mGlobe">صورة الكوكب</button>
+      <button class="btn" id="mMap">خريطة مسطحة</button>
+      <button class="btn" id="mExport">تصدير ملف</button>
+      <button class="btn" id="mImport">فتح ملف</button>
+    </div>
+    <div class="h3">إحصائيات العالم</div>
+    <div class="kv" id="worldStats"></div>
+    <div class="h3">طريقة اللعب</div>
+    <div class="help">
+      <p><b>إصبع واحد</b> يرسم بالأداة المختارة. <b>إصبعان</b> يدوّران الكوكب ويقرّبانه. زر اليد يحوّل الإصبع الواحد للتدوير.</p>
+      <p>على الحاسوب: الزر الأيسر للرسم، الأيمن أو المسافة للتدوير، والعجلة للتقريب. Ctrl+Z للتراجع.</p>
+      <p><b>وضع البناء</b>: ارفع القارات، انحت الجبال، وزّع المناخ، ارسم أقاليم الدول وابنِ المدن.</p>
+      <p><b>وضع الحضارة</b>: شغّل الزمن لتنمو شعوبك، تتقدم عبر العصور، تؤسس مدناً وتتوسع وتتنازع على الحدود.</p>
+      <p>يُحفظ عالمك تلقائياً في هذا المتصفح كل نصف دقيقة.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sheet" id="countrySheet" aria-label="الدول">
+  <div class="grip"></div>
+  <header><h2>الدول</h2><button class="ibtn" data-close aria-label="إغلاق">✕</button></header>
+  <div class="body">
+    <div class="list" id="countryList"></div>
+    <div class="h3" id="cfTitle">دولة جديدة</div>
+    <div class="field"><span>الاسم</span><div style="display:flex;gap:8px"><input class="input" id="cfName" maxlength="28"><button class="btn" id="cfRoll" aria-label="اسم عشوائي">🎲</button></div></div>
+    <div class="field"><span>اللون</span><div class="colors" id="cfColors"></div></div>
+    <div class="field"><span>الشعار</span><div class="emblems" id="cfEmblems"></div></div>
+    <div class="grid2"><button class="btn pri" id="cfSave">إنشاء الدولة</button><button class="btn danger" id="cfDel" hidden>حذف الدولة</button></div>
+  </div>
+</section>
+
+<section class="sheet" id="questSheet" aria-label="المهام">
+  <div class="grip"></div>
+  <header><h2>المهام</h2><button class="ibtn" data-close aria-label="إغلاق">✕</button></header>
+  <div class="body"><div class="list" id="questList"></div></div>
+</section>
+
+<div class="start" id="start">
+  <div class="startbox">
+    <h1 class="logo">أطلس<small>ATLAS · WORLD FORGE</small></h1>
+    <p class="tag">اصنع كوكباً من العدم، ارسم قاراته ومناخه، أسّس دولاً ومدناً، ثم أطلق الزمن وراقب حضاراتك تكبر.</p>
+    <div id="savesWrap" hidden><div class="h3" style="margin-top:0">تابع عالماً محفوظاً</div><div class="saves" id="saves"></div></div>
+    <div class="h3">كوكب جديد</div>
+    <div class="presets" id="presets"></div>
+    <div class="seedrow"><span style="font-size:12px;color:var(--mist)">البذرة</span><input class="input" id="seed" inputmode="numeric" maxlength="9"><button class="btn" id="seedRoll" aria-label="بذرة عشوائية">🎲</button></div>
+    <label class="tog" style="font-size:13px;margin:4px 0 14px"><input type="checkbox" id="seedCivs" checked> ابدأ بأربع حضارات ناشئة</label>
+    <button class="btn pri block" id="forge" style="font-size:15px;min-height:50px">اصنع الكوكب</button>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const PI=Math.PI, TAU=PI*2;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
+
+/* ================= WORLD DATA ================= */
+const GW=1024, GH=512, N=GW*GH;
+const H=new Float32Array(N), B=new Uint8Array(N), O=new Uint8Array(N), MO=new Float32Array(N), DT=new Float32Array(N), CODE=new Uint8Array(N);
+const preH=new Float32Array(N), preB=new Uint8Array(N), preO=new Uint8Array(N);
+const RGBA=new Uint8Array(N*4);
+const rowLat=new Float64Array(GH), rowSin=new Float64Array(GH), rowCos=new Float64Array(GH), rowArea=new Float64Array(GH);
+const colLon=new Float64Array(GW), colSin=new Float64Array(GW), colCos=new Float64Array(GW);
+for(let y=0;y<GH;y++){const la=PI/2-(y+.5)/GH*PI;rowLat[y]=la;rowSin[y]=Math.sin(la);rowCos[y]=Math.cos(la);rowArea[y]=510.1e6*Math.cos(la)*(PI/GH)*(TAU/GW)/(4*PI)}
+for(let x=0;x<GW;x++){const lo=(x+.5)/GW*TAU-PI;colLon[x]=lo;colSin[x]=Math.sin(lo);colCos[x]=Math.cos(lo)}
+
+let world={id:null,name:'عالمي',seed:1,preset:'continents',temp:0,created:Date.now()};
+let countries=[], cities=[], labels=[];
+let sim={year:0,running:false,speed:1,expand:true,war:true,log:[]};
+let prog={xp:0,done:{}};
+
+/* biome codes */
+const C={DEEP:0,SEA:1,SHALLOW:2,BEACH:10,GRASS:11,FOREST:12,DESERT:13,SNOW:14,TUNDRA:15,ROCK:16,PEAK:17,SWAMP:18,RIVER:19};
+const BNAME={0:'محيط عميق',1:'بحر',2:'مياه ضحلة',10:'شاطئ',11:'سهول عشبية',12:'غابات',13:'صحراء',14:'جليد',15:'تندرا',16:'جبال صخرية',17:'قمم ثلجية',18:'مستنقعات',19:'نهر'};
+const FERT={10:.5,11:1,12:.6,13:.07,14:.02,15:.15,16:.1,17:0,18:.35,19:1.7};
+const COL={10:[217,200,146],11:[143,172,104],12:[72,118,72],13:[214,180,118],14:[236,242,244],15:[160,170,146],16:[136,121,104],17:[244,244,240],18:[96,120,92],19:[78,178,214]};
+const OVR=[0,C.GRASS,C.FOREST,C.DESERT,C.SNOW,C.SWAMP,C.RIVER]; // B values -> codes
+
+/* ================= NOISE ================= */
+function rng(seed){let s=(seed>>>0)||1;return()=>{s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296}}
+function makeNoise(seed){
+  const r=rng(seed*7919+13), p=new Uint16Array(512), v=new Float32Array(256);
+  const perm=[...Array(256).keys()];for(let i=255;i>0;i--){const j=(r()*(i+1))|0;[perm[i],perm[j]]=[perm[j],perm[i]]}
+  for(let i=0;i<512;i++)p[i]=perm[i&255];for(let i=0;i<256;i++)v[i]=r();
+  const f=t=>t*t*(3-2*t);
+  return (x,y,z)=>{
+    const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=x-xi,yf=y-yi,zf=z-zi,X=xi&255,Y=yi&255,Z=zi&255,u=f(xf),w=f(yf),q=f(zf);
+    const h=(a,b,c)=>v[p[p[p[a]+b]+c]];
+    const X1=(X+1)&255,Y1=(Y+1)&255,Z1=(Z+1)&255;
+    const a=h(X,Y,Z)+(h(X1,Y,Z)-h(X,Y,Z))*u, b=h(X,Y1,Z)+(h(X1,Y1,Z)-h(X,Y1,Z))*u;
+    const c=h(X,Y,Z1)+(h(X1,Y,Z1)-h(X,Y,Z1))*u, d=h(X,Y1,Z1)+(h(X1,Y1,Z1)-h(X,Y1,Z1))*u;
+    const e=a+(b-a)*w, g=c+(d-c)*w; return e+(g-e)*q;
+  };
+}
+function fbm(n,x,y,z,o){let s=0,a=.5,t=0;for(let i=0;i<o;i++){s+=n(x,y,z)*a;t+=a;x*=2.03;y*=2.03;z*=2.03;a*=.5}return s/t}
+
+const PRESETS={
+  continents:{name:'قارات',f:1.55,sea:.515,k:3.2,temp:0},
+  archipelago:{name:'أرخبيل',f:3.1,sea:.565,k:3.4,temp:.05},
+  pangaea:{name:'قارة عظمى',f:1.2,sea:.5,k:3,temp:0,pan:true},
+  ice:{name:'عصر جليدي',f:1.7,sea:.53,k:3,temp:-.28},
+  dune:{name:'كوكب صحراوي',f:1.6,sea:.43,k:3,temp:.22,dry:true},
+  ocean:{name:'محيط فارغ',blank:true,temp:0}
+};
+function generate(preset,seed){
+  const P=PRESETS[preset]||PRESETS.continents;
+  world.preset=preset;world.seed=seed;world.temp=P.temp;
+  const n1=makeNoise(seed),n2=makeNoise(seed+101),n3=makeNoise(seed+202),n4=makeNoise(seed+303);
+  const r=rng(seed+5);const cx=r()*2-1,cy=(r()*2-1)*.4,cz=r()*2-1,cl=Math.hypot(cx,cy,cz)||1;
+  for(let y=0;y<GH;y++){const sl=rowSin[y],cla=rowCos[y];
+    for(let x=0;x<GW;x++){const i=y*GW+x,px=cla*colSin[x],py=sl,pz=cla*colCos[x];
+      MO[i]=fbm(n3,px*2.2+9,py*2.2,pz*2.2,4);
+      DT[i]=fbm(n4,px*14,py*14,pz*14,3);
+      if(P.blank){H[i]=-.32+(fbm(n1,px*2,py*2,pz*2,3)-.5)*.2;continue}
+      const wx=fbm(n2,px*1.4,py*1.4,pz*1.4,3)-.5;
+      let e=fbm(n1,px*P.f+wx*.9+3,py*P.f+wx*.9,pz*P.f-wx*.9,6);
+      if(P.pan){const d=(px*cx+py*cy+pz*cz)/cl;e=e*.62+(d*.5+.5)*.42}
+      let h=(e-P.sea)*P.k;
+      if(h>0){const rr=1-Math.abs(fbm(n2,px*3.3+7,py*3.3,pz*3.3,4)*2-1);h+=rr*rr*rr*.75*clamp(h*5,0,1)}
+      if(Math.abs(py)>.93&&!P.dry)h=Math.max(h,(Math.abs(py)-.93)*4+h*.3);
+      H[i]=clamp(h,-1,1);
+    }}
+  if(P.dry)for(let i=0;i<N;i++)MO[i]*=.55;
+  B.fill(0);O.fill(0);countries=[];cities=[];labels=[];
+  sim={year:0,running:false,speed:1,expand:true,war:true,log:[]};prog={xp:0,done:{}};
+  undoS=[];redoS=[];
+}
+
+/* ================= CLASSIFY + SHADE ================= */
+function classify(i,y){
+  const h=H[i];
+  if(h<0)return h<-.42?C.DEEP:h<-.08?C.SEA:C.SHALLOW;
+  const b=B[i];if(b)return OVR[b];
+  const lat=Math.abs(rowLat[y])/(PI/2), m=MO[i];
+  const T=1-lat*1.1-h*.45+world.temp+(DT[i]-.5)*.12;
+  if(h>.66)return T<.3?C.PEAK:C.ROCK;
+  if(T<.1)return C.SNOW;
+  if(T<.22)return C.TUNDRA;
+  if(h>.44)return C.ROCK;
+  if(h<.018)return C.BEACH;
+  if(T>.55&&m<.43)return C.DESERT;
+  if(m>.555)return C.FOREST;
+  return C.GRASS;
+}
+let highlight=0;
+function countryById(id){for(const c of countries)if(c.id===id)return c;return null}
+function shadeRows(y0,y1){
+  y0=Math.max(0,y0);y1=Math.min(GH-1,y1);
+  for(let y=y0;y<=y1;y++)for(let x=0;x<GW;x++)CODE[y*GW+x]=classify(y*GW+x,y);
+  const cmap={};for(const c of countries)cmap[c.id]=c;
+  for(let y=y0;y<=y1;y++){
+    for(let x=0;x<GW;x++){
+      const i=y*GW+x,h=H[i],code=CODE[i],d=DT[i];
+      const xl=y*GW+((x+GW-1)%GW),xr=y*GW+((x+1)%GW),yu=y>0?i-GW:i,yd=y<GH-1?i+GW:i;
+      let r,g,b;
+      if(h<0){
+        const t=clamp(-h/.75,0,1);
+        r=42+(9-42)*t;g=128+(40-128)*t;b=152+(78-152)*t;
+        if(H[xl]>=0||H[xr]>=0||H[yu]>=0||H[yd]>=0){r=r*.55+128*.45;g=g*.55+205*.45;b=b*.55+218*.45}
+        const v=.95+d*.1;r*=v;g*=v;b*=v;
+      }else{
+        const cc=COL[code];const v=.88+d*.2+(code===C.RIVER?0:h*.12);
+        r=cc[0]*v;g=cc[1]*v;b=cc[2]*v;
+        const o=O[i];
+        if(o){const c=cmap[o];if(c){const k=o===highlight?.5:.3;r=r+(c.rgb[0]-r)*k;g=g+(c.rgb[1]-g)*k;b=b+(c.rgb[2]-b)*k;
+          if(O[xl]!==o||O[xr]!==o||O[yu]!==o||O[yd]!==o){const L=1.18;r=Math.min(255,c.rgb[0]*L+30);g=Math.min(255,c.rgb[1]*L+30);b=Math.min(255,c.rgb[2]*L+30)}}}
+        else if(H[xl]<0||H[xr]<0||H[yu]<0||H[yd]<0){r*=.8;g*=.8;b*=.8}
+      }
+      const k=i*4;RGBA[k]=r>255?255:r;RGBA[k+1]=g>255?255:g;RGBA[k+2]=b>255?255:b;
+      RGBA[k+3]=h<0?Math.max(0,127+h*127):Math.min(255,128+h*127);
+    }
+  }
+  texRows(y0,y1);
+}
+
+/* ================= WEBGL GLOBE ================= */
+const glc=$('gl'), ov=$('ov'), octx=ov.getContext('2d');
+const gl=glc.getContext('webgl',{antialias:false,preserveDrawingBuffer:true,alpha:false});
+if(!gl){document.body.insertAdjacentHTML('beforeend','<div class="glfail">هذا الجهاز أو المتصفح لا يدعم WebGL، وهو مطلوب لعرض الكوكب ثلاثي الأبعاد. جرّب متصفح Chrome أو Safari بإصدار حديث.</div>');return}
+const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+const FS=`precision highp float;
+uniform vec2 uRes;uniform float uDist,uTanF,uGrid,uCurR,uTime,uOff;uniform vec3 uR0,uR1,uR2,uSun,uCur,uCurC;uniform sampler2D uTex;uniform vec2 uTx;
+float hash(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,37.719)))*43758.5453);}
+vec2 uvOf(vec3 l,out float lat,out float lon){lat=asin(clamp(l.y,-1.,1.));lon=atan(l.x,l.z);return vec2(lon/6.2831853+.5,.5-lat/3.1415927);}
+void main(){
+  vec2 ndc=gl_FragCoord.xy/uRes*2.-1.;ndc.y-=uOff;float asp=uRes.x/uRes.y;
+  vec3 dir=normalize(vec3(ndc.x*uTanF*asp,ndc.y*uTanF,-1.));vec3 ro=vec3(0.,0.,uDist);
+  float b=dot(ro,dir),c=dot(ro,ro)-1.,disc=b*b-c;
+  vec3 atmo=vec3(.32,.72,.92);
+  if(disc>0.){
+    float t=-b-sqrt(disc);vec3 n=ro+dir*t;
+    vec3 l=n.x*uR0+n.y*uR1+n.z*uR2;
+    float lat,lon;vec2 uv=uvOf(l,lat,lon);
+    vec4 tx=texture2D(uTex,uv);
+    bool water=tx.a<.5;
+    if(water){float h=(tx.a*255.-127.)/127.;float dt=clamp(-h/.75,0.,1.);
+      vec3 wc=mix(vec3(.165,.5,.6),vec3(.035,.157,.306),dt);
+      wc=mix(wc,vec3(.5,.8,.85),(1.-smoothstep(0.,.07,-h))*.5);tx.rgb=wc;}
+    vec3 nl=l;
+    if(!water){
+      float hE=texture2D(uTex,uv+vec2(uTx.x,0.)).a-texture2D(uTex,uv-vec2(uTx.x,0.)).a;
+      float hN=texture2D(uTex,uv-vec2(0.,uTx.y)).a-texture2D(uTex,uv+vec2(0.,uTx.y)).a;
+      vec3 e=vec3(cos(lon),0.,-sin(lon));vec3 tn=vec3(-sin(lat)*sin(lon),cos(lat),-sin(lat)*cos(lon));
+      nl=normalize(l-7.*(hE*e+hN*tn));
+    }
+    vec3 nv=vec3(dot(uR0,nl),dot(uR1,nl),dot(uR2,nl));
+    float dif=max(dot(nv,uSun),0.);
+    vec3 col=tx.rgb*(.34+.86*dif);
+    if(water){vec3 rf=reflect(-uSun,n);col+=vec3(1.,.95,.85)*pow(max(dot(rf,-dir),0.),38.)*.38;}
+    if(uGrid>.5){float w=.2*(uDist-.6);float la=degrees(lat),lo=degrees(lon);
+      float gl1=abs(fract(la/15.+.5)-.5)*15.,gl2=abs(fract(lo/15.+.5)-.5)*15.*cos(lat);
+      float g=1.-smoothstep(w*.5,w,min(gl1,gl2));col=mix(col,vec3(.95,.86,.62),g*.45);
+      if(abs(la)<w*.9)col=mix(col,vec3(1.,.85,.5),.5);}
+    if(uCurR>0.){float a=acos(clamp(dot(l,uCur),-1.,1.));float rw=.005*(uDist-.6);
+      col=mix(col,uCurC,(1.-smoothstep(rw*.4,rw,abs(a-uCurR)))*.9);
+      col=mix(col,uCurC,step(a,uCurR)*.1);}
+    float fr=pow(1.-max(dot(n,-dir),0.),2.6);col+=atmo*fr*.55;
+    gl_FragColor=vec4(col,1.);
+  }else{
+    float d2=dot(ro,ro)-b*b;float h=sqrt(max(d2,0.));
+    float g=b<0.?exp(-(h-1.)*16.)*.85:0.;
+    vec3 bg=mix(vec3(.016,.05,.085),vec3(.03,.08,.13),1.-length(ndc)*.5);
+    vec3 sg=dir*380.;float s=hash(floor(sg));float star=step(.9965,s)*(.4+.6*hash(floor(sg)+1.7))*smoothstep(.32,.05,length(fract(sg)-.5));
+    star*=.7+.3*sin(uTime*1.3+s*80.);
+    gl_FragColor=vec4(bg+atmo*g+vec3(star*.8),1.);
+  }
+}`;
+function sh(t,s){const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o));return o}
+const prog_=gl.createProgram();gl.attachShader(prog_,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog_,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog_);gl.useProgram(prog_);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const ap=gl.getAttribLocation(prog_,'p');gl.enableVertexAttribArray(ap);gl.vertexAttribPointer(ap,2,gl.FLOAT,false,0,0);
+const U={};['uOff','uRes','uDist','uTanF','uGrid','uCurR','uTime','uR0','uR1','uR2','uSun','uCur','uCurC','uTex','uTx'].forEach(k=>U[k]=gl.getUniformLocation(prog_,k));
+const tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
+gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,GW,GH,0,gl.RGBA,gl.UNSIGNED_BYTE,RGBA);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+gl.uniform1i(U.uTex,0);gl.uniform2f(U.uTx,1/GW,1/GH);
+const sun=[-.45,.5,.74];{const l=Math.hypot(...sun);gl.uniform3f(U.uSun,sun[0]/l,sun[1]/l,sun[2]/l)}
+let texDirty=null;
+function texRows(a,b){texDirty=texDirty?[Math.min(texDirty[0],a),Math.max(texDirty[1],b)]:[a,b];need=true}
+
+/* camera */
+const FOV=36*PI/180, TANF=Math.tan(FOV/2);
+let yaw=0,pitch=.25,dist=3.6,vy=0,vp=0,grid=false,need=true,idle=false;
+let R=[[1,0,0],[0,1,0],[0,0,1]];
+let focusAnim=null;
+function updR(){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+  R=[[cy,0,sy],[sp*sy,cp,-sp*cy],[-cp*sy,sp,cp*cy]]}
+let cw=1,ch=1,dpr=1,offY=0,availH=1;
+function layoutView(){const tr=document.querySelector('.tray:not([hidden])');const trayH=($('start').hidden&&tr)?Math.max(0,ch-tr.getBoundingClientRect().top):0;const topH=$('start').hidden?64:0;offY=(trayH-topH)/ch;availH=Math.max(120,ch-trayH-topH);need=true}
+function homeDist(){const R=.46*Math.min(cw,availH);const s=(ch/2)/(TANF*R);return Math.sqrt(s*s+1)}
+const maxS=()=>Math.max(5,(homeDist()-1)*1.6);
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);cw=glc.clientWidth;ch=glc.clientHeight;
+  glc.width=Math.round(cw*dpr);glc.height=Math.round(ch*dpr);ov.width=glc.width;ov.height=glc.height;
+  gl.viewport(0,0,glc.width,glc.height);layoutView();need=true}
+window.addEventListener('resize',resize);
+const lonlat2v=(lat,lon)=>[Math.cos(lat)*Math.sin(lon),Math.sin(lat),Math.cos(lat)*Math.cos(lon)];
+function toView(v){return[R[0][0]*v[0]+R[0][1]*v[1]+R[0][2]*v[2],R[1][0]*v[0]+R[1][1]*v[1]+R[1][2]*v[2],R[2][0]*v[0]+R[2][1]*v[1]+R[2][2]*v[2]]}
+function project(lat,lon){const v=toView(lonlat2v(lat,lon));const zc=dist-v[2];const asp=cw/ch;
+  return{x:(v[0]/zc/TANF/asp*.5+.5)*cw,y:(-(v[1]/zc/TANF+offY)*.5+.5)*ch,face:v[2]-1/dist}}
+function pick(cx,cy){const r=glc.getBoundingClientRect();const nx=((cx-r.left)/r.width)*2-1,ny=-(((cy-r.top)/r.height)*2-1)-offY;
+  const asp=r.width/r.height;let d=[nx*TANF*asp,ny*TANF,-1];const l=Math.hypot(...d);d=d.map(v=>v/l);
+  const b=dist*d[2],c=dist*dist-1,disc=b*b-c;if(disc<0)return null;const t=-b-Math.sqrt(disc);
+  const n=[d[0]*t,d[1]*t,dist+d[2]*t];
+  const L=[R[0][0]*n[0]+R[1][0]*n[1]+R[2][0]*n[2],R[0][1]*n[0]+R[1][1]*n[1]+R[2][1]*n[2],R[0][2]*n[0]+R[1][2]*n[1]+R[2][2]*n[2]];
+  return{lat:Math.asin(clamp(L[1],-1,1)),lon:Math.atan2(L[0],L[2]),v:L}}
+function cellOf(lat,lon){const y=clamp(Math.floor((PI/2-lat)/PI*GH),0,GH-1);const x=((Math.floor((lon+PI)/TAU*GW)%GW)+GW)%GW;return{x,y,i:y*GW+x}}
+const pxPerRad=()=>(ch/2)/TANF/Math.sqrt(dist*dist-1);
+
+let cursor=null;
+function draw(t){
+  updR();
+  gl.uniform2f(U.uRes,glc.width,glc.height);gl.uniform1f(U.uOff,offY);gl.uniform1f(U.uDist,dist);gl.uniform1f(U.uTanF,TANF);gl.uniform1f(U.uGrid,grid?1:0);gl.uniform1f(U.uTime,t/1000);
+  gl.uniform3f(U.uR0,...R[0]);gl.uniform3f(U.uR1,...R[1]);gl.uniform3f(U.uR2,...R[2]);
+  if(cursor){gl.uniform1f(U.uCurR,cursor.r);gl.uniform3f(U.uCur,...cursor.v);gl.uniform3f(U.uCurC,...cursor.c)}else gl.uniform1f(U.uCurR,-1);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  drawOverlay();
+}
+
+/* ================= OVERLAY (names, cities) ================= */
+function drawOverlay(){
+  octx.setTransform(dpr,0,0,dpr,0,0);octx.clearRect(0,0,cw,ch);
+  const boxes=[];const free=(x,y,w,h)=>{for(const b of boxes)if(x<b[0]+b[2]&&x+w>b[0]&&y<b[1]+b[3]&&y+h>b[1])return false;boxes.push([x,y,w,h]);return true};
+  const zs=clamp((homeDist()-1)/(dist-1)*.85,.7,2.6);
+  octx.textAlign='center';octx.textBaseline='middle';octx.direction='rtl';octx.lineJoin='round';
+  // capitals & cities
+  const sorted=cities.slice().sort((a,b)=>(b.cap-a.cap)||(b.pop-a.pop));
+  for(const c of sorted){const p=project(c.lat,c.lon);if(p.face<0.02)continue;const a=clamp(p.face*5,0,1);
+    const cap=c.cap, r=cap?6:4;
+    octx.globalAlpha=a;
+    octx.beginPath();
+    if(cap){star(p.x,p.y,8,3.6)}else octx.arc(p.x,p.y,r,0,TAU);
+    octx.fillStyle=cap?'#f0cf8a':'#f4f1ea';octx.strokeStyle='#06111c';octx.lineWidth=2;octx.stroke();octx.fill();
+    if(zs>.85||cap){const fs=(cap?13:11.5)*Math.min(zs,1.5);octx.font=`${cap?800:700} ${fs}px Cairo,Tahoma,sans-serif`;
+      const w=octx.measureText(c.name).width;if(free(p.x-w/2,p.y+8,w,fs+2)){octx.lineWidth=3.5;octx.strokeStyle='rgba(6,17,28,.85)';octx.strokeText(c.name,p.x,p.y+15*Math.min(zs,1.3));octx.fillStyle=cap?'#f0cf8a':'#e8eef0';octx.fillText(c.name,p.x,p.y+15*Math.min(zs,1.3))}}
+  }
+  // country names
+  const cs=countries.filter(c=>c.cells>40).sort((a,b)=>b.area-a.area);
+  for(const c of cs){const p=project(c.clat,c.clon);if(p.face<.08)continue;const a=clamp(p.face*3,0,1);
+    const fs=clamp(9+Math.sqrt(c.area)/190,11,26)*clamp(zs,.8,1.8);
+    octx.font=`700 ${fs}px "Reem Kufi",Cairo,sans-serif`;const w=octx.measureText(c.name).width;
+    if(!free(p.x-w/2,p.y-fs/2-10,w,fs))continue;
+    octx.globalAlpha=a*.95;octx.lineWidth=4;octx.strokeStyle='rgba(6,17,28,.75)';octx.strokeText(c.name,p.x,p.y-10);
+    octx.fillStyle='#fff7e6';octx.fillText(c.name,p.x,p.y-10);
+  }
+  // labels
+  for(const l of labels){const p=project(l.lat,l.lon);if(p.face<.05)continue;octx.globalAlpha=clamp(p.face*3,0,1);
+    const fs=13*clamp(zs,.8,1.6);octx.font=`italic 600 ${fs}px Cairo,sans-serif`;octx.lineWidth=3;octx.strokeStyle='rgba(6,17,28,.7)';octx.strokeText(l.text,p.x,p.y);octx.fillStyle='#bfe6ef';octx.fillText(l.text,p.x,p.y)}
+  octx.globalAlpha=1;
+}
+function star(x,y,R1,R2){for(let k=0;k<10;k++){const a=-PI/2+k*PI/5,r=k%2?R2:R1;k?octx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r):octx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}octx.closePath()}
+
+/* ================= BRUSHES ================= */
+let editY0=GH,editY1=-1;
+function brush(lat0,lon0,rad,fn){
+  const sl=Math.sin(lat0),cl=Math.cos(lat0),cosR=Math.cos(rad),cL=Math.cos(lon0),sL=Math.sin(lon0);
+  const yA=clamp(Math.floor((PI/2-(lat0+rad))/PI*GH),0,GH-1),yB=clamp(Math.ceil((PI/2-(lat0-rad))/PI*GH),0,GH-1);
+  for(let y=yA;y<=yB;y++){
+    const sLa=rowSin[y],cLa=rowCos[y];let x0,x1;
+    const den=cLa*cl;
+    if(den<1e-6){x0=0;x1=GW-1}else{const q=(cosR-sLa*sl)/den;if(q>1)continue;if(q<=-1){x0=0;x1=GW-1}else{const D=Math.acos(q);x0=Math.floor((lon0-D+PI)/TAU*GW)-1;x1=Math.ceil((lon0+D+PI)/TAU*GW)+1;if(x1-x0>=GW){x0=0;x1=GW-1}}}
+    for(let xx=x0;xx<=x1;xx++){const x=((xx%GW)+GW)%GW;
+      const dot=sLa*sl+cLa*cl*(colCos[x]*cL+colSin[x]*sL);if(dot<cosR)continue;
+      const t=Math.acos(Math.min(1,dot))/rad;fn(y*GW+x,1-t*t*(3-2*t),t,x,y)}
+  }
+  editY0=Math.min(editY0,yA);editY1=Math.max(editY1,yB);
+  pendingShade=pendingShade?[Math.min(pendingShade[0],yA-1),Math.max(pendingShade[1],yB+1)]:[yA-1,yB+1];
+}
+let pendingShade=null;
+const BSET={grass:1,forest:2,desert:3,snow:4,swamp:5};
+function stamp(tool,lat,lon){
+  const rad=+$('bSize').value*PI/180, s=+$('bStr').value;
+  switch(tool){
+    case 'raise':brush(lat,lon,rad,(i,w)=>{H[i]=Math.min(1,H[i]+w*s*.07*(H[i]<0?1.6:1))});break;
+    case 'lower':brush(lat,lon,rad,(i,w)=>{H[i]=Math.max(-1,H[i]-w*s*.07*(H[i]>0?1.5:1))});break;
+    case 'mountain':brush(lat,lon,rad,(i,w)=>{if(H[i]>=-.05)H[i]=Math.min(1,H[i]+w*s*(.03+.09*DT[i]*DT[i]*2))});break;
+    case 'smooth':{const tmp=[];brush(lat,lon,rad,(i,w,t,x,y)=>{const a=(H[y*GW+(x+1)%GW]+H[y*GW+(x+GW-1)%GW]+H[y>0?i-GW:i]+H[y<GH-1?i+GW:i])/4;tmp.push(i,H[i]+(a-H[i])*w*s*.8)});for(let k=0;k<tmp.length;k+=2)H[tmp[k]]=tmp[k+1];break}
+    case 'natural':brush(lat,lon,rad,(i,w)=>{if(Math.random()<w*1.6)B[i]=0});break;
+    case 'river':brush(lat,lon,Math.max(rad*.18,.35*PI/180),(i,w)=>{if(w>.15){if(H[i]<.012&&H[i]>=0)H[i]=.012;if(H[i]>=0)B[i]=6}});break;
+    case 'territory':{const id=activeId();if(!id)return;brush(lat,lon,rad,(i,w)=>{if(w>.25&&H[i]>=0)O[i]=id});break}
+    case 'erase':brush(lat,lon,rad,(i,w)=>{if(w>.25)O[i]=0});break;
+    default:if(BSET[tool]){const v=BSET[tool];brush(lat,lon,rad,(i,w)=>{if(H[i]>=0&&Math.random()<w*1.7)B[i]=v})}
+  }
+}
+let stroke=null;
+function strokeTo(hit){
+  const tool=activeTool;const rad=(tool==='river'?Math.max(+$('bSize').value*.18,.35):+$('bSize').value)*PI/180;
+  if(!stroke.last){stamp(tool,hit.lat,hit.lon);stroke.last=hit.v;return}
+  const a=stroke.last,b=hit.v;const ang=Math.acos(clamp(a[0]*b[0]+a[1]*b[1]+a[2]*b[2],-1,1));
+  const step=Math.max(rad*(tool==='river'||tool==='territory'||tool==='erase'?.35:.5),.001);const n=Math.min(60,Math.ceil(ang/step));
+  if(n<1&&tool!=='raise'&&tool!=='lower'&&tool!=='mountain')return;
+  const sa=Math.sin(ang)||1;
+  for(let k=1;k<=Math.max(1,n);k++){const t=k/Math.max(1,n);let v;
+    if(ang<1e-6)v=b;else{const f0=Math.sin((1-t)*ang)/sa,f1=Math.sin(t*ang)/sa;v=[a[0]*f0+b[0]*f1,a[1]*f0+b[1]*f1,a[2]*f0+b[2]*f1]}
+    stamp(tool,Math.asin(clamp(v[1],-1,1)),Math.atan2(v[0],v[2]))}
+  stroke.last=b;
+}
+function flushShade(){if(pendingShade){shadeRows(pendingShade[0],pendingShade[1]);pendingShade=null;scanDirty=true}}
+
+/* ================= UNDO ================= */
+let undoS=[],redoS=[];
+const snapObjs=()=>JSON.stringify({countries,cities,labels});
+function restoreObjs(s){const o=JSON.parse(s);countries=o.countries;cities=o.cities;labels=o.labels}
+let preObjs=null;
+function beginEdit(){preH.set(H);preB.set(B);preO.set(O);preObjs=snapObjs();editY0=GH;editY1=-1}
+function endEdit(){
+  const objsNow=snapObjs();
+  if(editY1<0&&objsNow===preObjs)return;
+  const e={y0:editY1<0?-1:editY0,y1:editY1,objs:preObjs};
+  if(e.y0>=0){const a=e.y0*GW,b=(e.y1+1)*GW;e.h=preH.slice(a,b);e.b=preB.slice(a,b);e.o=preO.slice(a,b)}
+  undoS.push(e);if(undoS.length>40)undoS.shift();redoS=[];syncUndo();dirtySave=true;checkSoon();
+}
+function cancelStroke(){if(editY1>=0){const a=editY0*GW,b=(editY1+1)*GW;H.set(preH.subarray(a,b),a);B.set(preB.subarray(a,b),a);O.set(preO.subarray(a,b),a);pendingShade=null;shadeRows(editY0-1,editY1+1)}stroke=null;editY1=-1}
+function applyEntry(e){
+  const inv={y0:e.y0,y1:e.y1,objs:snapObjs()};
+  if(e.y0>=0){const a=e.y0*GW,b=(e.y1+1)*GW;inv.h=H.slice(a,b);inv.b=B.slice(a,b);inv.o=O.slice(a,b);H.set(e.h,a);B.set(e.b,a);O.set(e.o,a)}
+  restoreObjs(e.objs);
+  if(e.y0>=0)shadeRows(e.y0-1,e.y1+1);else shadeRows(0,GH-1);
+  scanDirty=true;afterObjs();return inv;
+}
+function undo(){if(!undoS.length)return;redoS.push(applyEntry(undoS.pop()));syncUndo();toast('تم التراجع')}
+function redo(){if(!redoS.length)return;undoS.push(applyEntry(redoS.pop()));syncUndo();toast('تمت الإعادة')}
+function syncUndo(){$('undoBtn').disabled=!undoS.length;$('redoBtn').disabled=!redoS.length}
+$('undoBtn').onclick=undo;$('redoBtn').onclick=redo;
+
+/* ================= NAMES ================= */
+const SY=['قر','طا','سا','مي','رو','نا','زي','ها','لو','فا','دا','كي','بر','سل','ثا','عو','مر','جا','يا','شا','نو','تي','غا','بو'];
+const EN_C=['ان','ستان','يا','ور','ين','ار','وم','يس'];
+const PRE_C=['مملكة','سلطنة','جمهورية','إمارة','اتحاد','دوقية','خانية'];
+const EN_T=['آباد','بور','ية','ان','ون','ة','يم','ار'];
+const pickR=a=>a[(Math.random()*a.length)|0];
+const word=n=>{let s='';for(let k=0;k<n;k++)s+=pickR(SY);return s};
+const countryName=()=>Math.random()<.55?pickR(PRE_C)+' '+word(2)+pickR(EN_C):word(2)+pickR(EN_C);
+function cityName(code,coast){if(coast&&Math.random()<.35)return 'مرفأ '+word(2);if((code===C.ROCK||code===C.TUNDRA)&&Math.random()<.4)return 'حصن '+word(2);if(code===C.RIVER&&Math.random()<.4)return 'وادي '+word(2);return word(Math.random()<.5?2:1)+pickR(EN_T)}
+const PALETTE=['#c8504b','#3f7fd0','#3fa66b','#d9a640','#8d62c9','#2fa7a0','#d9773b','#c95f93','#8ea13f','#6c86a3','#a87f4a','#8f3f52'];
+const EMBLEMS=['☾','✦','⚜','♜','✶','❖','⚔','☀','♛','✠','❂','⚓'];
+const hex2rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+function newCountry(name,color,emblem){let id=1;while(countries.some(c=>c.id===id))id++;if(id>250)return null;
+  const c={id,name,color,rgb:hex2rgb(color),emblem,pop:0,tech:0,stab:60,wealth:0,K:0,cells:0,area:0,clat:0,clon:0,era:0};countries.push(c);return c}
+
+/* ================= SCAN / STATS ================= */
+let scanDirty=true, stats=null, G={land:0,mount:0,forest:0,river:0,landPct:0};
+function scan(){
+  const S={};for(const c of countries){S[c.id]={cells:0,area:0,fert:0,coast:0,river:0,vx:0,vy:0,vz:0,cand:[],nc:0,own:[],no:0}}
+  const contacts={};let land=0,mount=0,forest=0,river=0,landA=0;
+  for(let y=0;y<GH;y++){const ar=rowArea[y],sl=rowSin[y],cla=rowCos[y];
+    for(let x=0;x<GW;x++){const i=y*GW+x,h=H[i];
+      if(h<0)continue;const code=CODE[i];land++;landA+=ar;if(code===C.ROCK||code===C.PEAK)mount++;else if(code===C.FOREST)forest++;else if(code===C.RIVER)river++;
+      const o=O[i];
+      const xr=y*GW+(x+1)%GW,xl=y*GW+(x+GW-1)%GW,yd=y<GH-1?i+GW:i,yu=y>0?i-GW:i;
+      if(o){const s=S[o];if(!s)continue;s.cells++;s.area+=ar;s.fert+=(FERT[code]||0)*ar/1500;
+        s.vx+=cla*colSin[x]*ar;s.vy+=sl*ar;s.vz+=cla*colCos[x]*ar;
+        if(code===C.RIVER)s.river++;
+        if(H[xr]<0||H[xl]<0||H[yd]<0||H[yu]<0)s.coast++;
+        s.no++;if(s.own.length<80)s.own.push(i);else if(Math.random()*s.no<80)s.own[(Math.random()*80)|0]=i;
+        for(const j of [xr,yd]){const oj=O[j];if(H[j]<0)continue;
+          if(oj===0){s.nc++;if(s.cand.length<300)s.cand.push(j);else if(Math.random()*s.nc<300)s.cand[(Math.random()*300)|0]=j}
+          else if(oj!==o){const k=o<oj?o+'_'+oj:oj+'_'+o;const ct=contacts[k]||(contacts[k]={a:Math.min(o,oj),b:Math.max(o,oj),n:0,cells:[]});ct.n++;if(ct.cells.length<40)ct.cells.push(i,j)}}
+        // left/up neighbors unowned
+        for(const j of [xl,yu]){if(O[j]===0&&H[j]>=0){s.nc++;if(s.cand.length<300)s.cand.push(j);else if(Math.random()*s.nc<300)s.cand[(Math.random()*300)|0]=j}}
+      }
+    }}
+  for(const c of countries){const s=S[c.id];c.cells=s.cells;c.area=s.area;
+    if(s.cells){const l=Math.hypot(s.vx,s.vy,s.vz)||1;c.clat=Math.asin(s.vy/l);c.clon=Math.atan2(s.vx,s.vz)}}
+  G={land,mount,forest,river,landPct:land/N*100,landA};
+  stats={S,contacts};scanDirty=false;return stats;
+}
+
+/* ================= TOOLS UI ================= */
+const ICON={
+  raise:'<path d="M3 19c3-6 5-9 9-9s6 3 9 9z"/><path d="M12 3v4M9.5 5.5L12 3l2.5 2.5"/>',
+  lower:'<path d="M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0M12 17v4M9.5 19L12 21.5 14.5 19"/>',
+  mountain:'<path d="M2 20L9 7l4 7 2-3 7 9z"/><path d="M7.5 10l1.5 1.5L11 10"/>',
+  smooth:'<path d="M3 16c3 0 3-6 6-6s3 4 6 4 3-3 6-3"/><path d="M3 20h18"/>',
+  grass:'<path d="M4 20c1-4 1-8 0-12M8 20c0-5 2-8 4-10M12 20c0-6 0-9-2-12M16 20c0-4 1-7 4-9M20 20c-1-3-1-6 0-8"/>',
+  forest:'<path d="M8 3l5 7h-3l4 6H2l4-6H3z"/><path d="M8 16v5M16 8l4 5h-2l3 4h-6"/><path d="M17 17v4"/>',
+  desert:'<circle cx="17" cy="6" r="2.5"/><path d="M2 18c4-5 8-5 12-2s6 2 8 0M2 21h20"/>',
+  snow:'<path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2 3-2M9 20l3-2 3 2"/>',
+  swamp:'<path d="M2 18c2-1.5 4-1.5 6 0s4 1.5 6 0 4-1.5 6 0M7 16V6M7 6c0 2 2 2 2 4M12 15V9M17 16V4c0 2 2 3 2 5"/>',
+  river:'<path d="M6 2c0 4 6 4 6 8s-6 4-6 8 3 4 3 4M14 2c0 4 6 4 6 8s-4 4-4 8"/>',
+  natural:'<path d="M12 21V11M12 11c-4 0-7-3-7-8 4 0 7 3 7 8zM12 14c3 0 6-2 6-6-3 0-6 2-6 6"/>',
+  territory:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/><path d="M15 17l2 2 4-4" stroke-dasharray="0"/>',
+  erase:'<path d="M16 3l5 5-10 10H6l-3-3z"/><path d="M10 8l6 6M6 21h14"/>',
+  city:'<path d="M3 21V10l5-3v14M8 21V5l6-3v19M14 21V9l7 2v10M3 21h18"/>',
+  capital:'<path d="M12 2l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17l-5.9 3 1.2-6.5L2.5 8.9 9.1 8z"/>',
+  label:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8" r="1.5"/>',
+  inspect:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>'
+};
+const TABS=[
+  {id:'terrain',name:'التضاريس',tools:[['raise','يابسة'],['lower','بحر'],['mountain','جبال'],['smooth','تنعيم']]},
+  {id:'climate',name:'المناخ',tools:[['grass','سهول'],['forest','غابات'],['desert','صحراء'],['snow','جليد'],['swamp','مستنقع'],['river','نهر'],['natural','طبيعي']]},
+  {id:'politics',name:'الدول',tools:[['territory','إقليم'],['erase','إزالة'],['capital','عاصمة']]},
+  {id:'settle',name:'العمران',tools:[['city','مدينة'],['capital','عاصمة'],['label','تسمية'],['inspect','استكشاف']]}
+];
+const TAPTOOLS={city:1,capital:1,label:1,inspect:1};
+const TNAME={};TABS.forEach(t=>t.tools.forEach(([k,n])=>TNAME[k]=n));
+let activeTab='terrain',activeTool='raise',activeCountry=0,handMode=false,mode='build';
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+function renderTabs(){$('tabs').innerHTML=TABS.map(t=>`<button data-t="${t.id}" class="${t.id===activeTab?'on':''}">${t.name}</button>`).join('');
+  $('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{activeTab=b.dataset.t;const tb=TABS.find(t=>t.id===activeTab);if(!tb.tools.some(x=>x[0]===activeTool))activeTool=tb.tools[0][0];renderTabs();buzz(6)});
+  const tb=TABS.find(t=>t.id===activeTab);
+  $('tools').innerHTML=tb.tools.map(([k,n])=>`<button class="tool ${k===activeTool?'on':''}" data-k="${k}">${svg(k)}<span>${n}</span></button>`).join('');
+  $('tools').querySelectorAll('.tool').forEach(b=>b.onclick=()=>{activeTool=b.dataset.k;renderTabs();buzz(8);if(activeTool==='territory'&&!activeId())openCountries(true)});
+  $('brushRow').hidden=!!TAPTOOLS[activeTool];
+  $('countryChip').hidden=!(activeTab==='politics'||activeTool==='capital');
+  renderChip();
+}
+function activeId(){return countryById(activeCountry)?activeCountry:0}
+function renderChip(){const c=countryById(activeCountry);$('chipSw').style.background=c?c.color:'#33475a';$('chipSw').textContent=c?c.emblem:'+';$('chipName').textContent=c?c.name:'أنشئ دولة لتبدأ رسم أقاليمها'}
+$('countryChip').onclick=()=>openCountries();
+
+/* ================= POINTER / GESTURES ================= */
+const ptrs=new Map();let gest=null,spaceDown=false,lastHover=0;
+function brushColor(){const t=activeTool;if(t==='lower')return[.4,.8,1];if(t==='territory'){const c=countryById(activeCountry);return c?c.rgb.map(v=>v/255):[1,1,1]}if(t==='erase')return[1,.5,.45];return[1,.86,.55]}
+function setCursor(hit){if(!hit||TAPTOOLS[activeTool]||mode!=='build'){if(cursor){cursor=null;need=true}return}
+  const r=(activeTool==='river'?Math.max(+$('bSize').value*.18,.35):+$('bSize').value)*PI/180;cursor={v:hit.v,r,c:brushColor()};need=true}
+function showCoords(hit){if(!hit)return;const la=hit.lat*180/PI,lo=hit.lon*180/PI;$('coords').textContent=`${Math.abs(la).toFixed(1)}°${la>=0?'N':'S'}  ${Math.abs(lo).toFixed(1)}°${lo>=0?'E':'W'}`}
+glc.addEventListener('contextmenu',e=>e.preventDefault());
+glc.addEventListener('pointerdown',e=>{
+  try{glc.setPointerCapture(e.pointerId)}catch(_){}
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});vy=vp=0;focusAnim=null;idle=false;hideCard();
+  if(ptrs.size===2){if(gest&&gest.type==='paint')cancelStroke();const [a,b]=[...ptrs.values()];gest={type:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y),s0:dist-1,mx:(a.x+b.x)/2,my:(a.y+b.y)/2};cursor=null;return}
+  if(ptrs.size>2)return;
+  const mouse=e.pointerType==='mouse';
+  if(mouse&&e.button!==0){gest={type:'rotate',x:e.clientX,y:e.clientY,t:performance.now()};return}
+  if(mode==='build'&&!TAPTOOLS[activeTool]&&!handMode&&!spaceDown){
+    const hit=pick(e.clientX,e.clientY);
+    if(hit){if(activeTool==='territory'&&!activeId()){openCountries(true);return}
+      beginEdit();stroke={last:null};gest={type:'paint'};strokeTo(hit);setCursor(hit);showCoords(hit);return}
+  }
+  gest={type:'tap',x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,t0:performance.now(),t:performance.now()};
+});
+glc.addEventListener('pointermove',e=>{
+  const p=ptrs.get(e.pointerId);
+  if(!p){if(e.pointerType==='mouse'){const now=performance.now();if(now-lastHover>30){lastHover=now;const hit=pick(e.clientX,e.clientY);setCursor(hit);showCoords(hit)}}return}
+  p.x=e.clientX;p.y=e.clientY;
+  if(!gest)return;
+  if(gest.type==='pinch'&&ptrs.size>=2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    dist=1+clamp(gest.s0*gest.d0/Math.max(d,1),.12,maxS());
+    const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,k=1/pxPerRad();yaw+=(mx-gest.mx)*k;pitch=clamp(pitch+(my-gest.my)*k,-1.45,1.45);gest.mx=mx;gest.my=my;need=true;return}
+  if(gest.type==='paint'){const hit=pick(e.clientX,e.clientY);if(hit){strokeTo(hit);setCursor(hit);showCoords(hit)}return}
+  if(gest.type==='tap'){if(Math.hypot(e.clientX-gest.x0,e.clientY-gest.y0)>7)gest.type='rotate';else return}
+  if(gest.type==='rotate'){const k=1/pxPerRad(),dx=e.clientX-gest.x,dy=e.clientY-gest.y,now=performance.now(),dt=Math.max(8,now-gest.t);
+    yaw+=dx*k;pitch=clamp(pitch+dy*k,-1.45,1.45);vy=dx*k/dt*16;vp=dy*k/dt*16;gest.x=e.clientX;gest.y=e.clientY;gest.t=now;need=true}
+});
+function endPtr(e,cancel){
+  if(!ptrs.has(e.pointerId))return;ptrs.delete(e.pointerId);
+  if(!gest)return;
+  if(gest.type==='pinch'){if(ptrs.size===1){const q=[...ptrs.values()][0];gest={type:'rotate',x:q.x,y:q.y,t:performance.now()}}else gest=null;vy=vp=0;return}
+  if(gest.type==='paint'){flushShade();endEdit();stroke=null;if(e.pointerType!=='mouse')cursor=null;need=true}
+  else if(gest.type==='tap'&&!cancel&&performance.now()-gest.t0<600)onTap(e.clientX,e.clientY);
+  else if(gest.type==='rotate'&&performance.now()-gest.t>60){vy=vp=0}
+  gest=null;
+}
+glc.addEventListener('pointerup',e=>endPtr(e,false));glc.addEventListener('pointercancel',e=>endPtr(e,true));
+glc.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!ptrs.size&&cursor){cursor=null;need=true}});
+glc.addEventListener('wheel',e=>{e.preventDefault();dist=1+clamp((dist-1)*Math.exp(e.deltaY*.0012),.12,maxS());need=true},{passive:false});
+document.addEventListener('keydown',e=>{
+  const typing=/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+  if((e.ctrlKey||e.metaKey)&&!typing){const k=e.key.toLowerCase();if(k==='z'&&!e.shiftKey){e.preventDefault();undo()}else if(k==='y'||(k==='z'&&e.shiftKey)){e.preventDefault();redo()}}
+  if(e.code==='Space'&&!typing){spaceDown=true;e.preventDefault()}
+  if(e.key==='Escape'){closeSheets();hideCard();closeModal()}
+});
+document.addEventListener('keyup',e=>{if(e.code==='Space')spaceDown=false});
+$('handBtn').onclick=()=>{handMode=!handMode;$('handBtn').classList.toggle('on',handMode);toast(handMode?'إصبع واحد يدوّر الكوكب الآن':'إصبع واحد يرسم الآن');buzz(8)};
+$('homeBtn').onclick=()=>{layoutView();focusTo(.25,-yaw,homeDist())};
+$('gridBtn').onclick=()=>{grid=!grid;$('gridBtn').classList.toggle('on',grid);need=true};
+function focusTo(lat,lon,d){let ty=-lon;while(ty-yaw>PI)ty-=TAU;while(ty-yaw<-PI)ty+=TAU;focusAnim={y0:yaw,p0:pitch,d0:dist,y1:ty,p1:clamp(lat,-1.4,1.4),d1:d||dist,t0:performance.now()}}
+
+/* ================= TAP ACTIONS ================= */
+function onTap(cx,cy){
+  // city hit test
+  const r=glc.getBoundingClientRect();const lx=cx-r.left,ly=cy-r.top;
+  let best=null,bd=22;for(const c of cities){const p=project(c.lat,c.lon);if(p.face<.02)continue;const d=Math.hypot(p.x-lx,p.y-ly);if(d<bd){bd=d;best=c}}
+  const hit=pick(cx,cy);
+  if(mode==='civ'){if(best)return cityCard(best);if(!hit)return;const cl=cellOf(hit.lat,hit.lon);const c=countryById(O[cl.i]);if(c){selectCountry(c.id,false);countryCard(c)}else placeCard(hit);return}
+  if(best&&(activeTool==='inspect'||activeTool==='city'||activeTool==='capital'||activeTool==='label'))return cityCard(best);
+  if(!hit)return;
+  if(activeTool==='inspect')return placeCard(hit);
+  if(activeTool==='label')return askText('تسمية على الخريطة','اكتب اسم بحر أو جبل أو منطقة.','',v=>{beginEdit();labels.push({lat:hit.lat,lon:hit.lon,text:v,id:Date.now()});endEdit();need=true;toast('أُضيفت التسمية')});
+  if(activeTool==='city'||activeTool==='capital')placeCity(hit,activeTool==='capital');
+}
+function placeCity(hit,cap){
+  const cl=cellOf(hit.lat,hit.lon);if(H[cl.i]<0){toast('لا يمكن البناء فوق الماء');return}
+  let owner=O[cl.i];
+  if(cap&&!owner){const c=countryById(activeCountry);if(!c){toast('ارسم إقليم دولة أولاً ثم ضع عاصمتها');return}
+    beginEdit();brush(hit.lat,hit.lon,2.5*PI/180,(i,w)=>{if(w>.2&&H[i]>=0&&O[i]===0)O[i]=c.id});flushShade();owner=c.id}
+  else beginEdit();
+  const coast=H[cl.i-1]<0||H[cl.i+1]<0;
+  const name=cityName(CODE[cl.i],coast);
+  if(cap)cities.forEach(c=>{if(c.owner===owner)c.cap=false});
+  const city={id:Date.now()+Math.random(),lat:hit.lat,lon:hit.lon,name,cap:!!cap,owner,pop:cap?40:12,founded:sim.year};
+  cities.push(city);endEdit();need=true;buzz(12);
+  const oc=countryById(owner);toast(cap?`${name} عاصمة ${oc?oc.name:''}`:`تأسست مدينة ${name}`);
+  cityCard(city);
+}
+function cardEl(html){const c=$('card');c.innerHTML=html;c.hidden=false;return c}
+function hideCard(){$('card').hidden=true}
+function fmtPop(k){if(k>=1000)return (k/1000).toFixed(k>=10000?0:1)+' مليون';return Math.max(1,Math.round(k))+' ألف'}
+const fmtArea=a=>Math.round(a).toLocaleString('ar-EG')+' كم²';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function placeCard(hit){const cl=cellOf(hit.lat,hit.lon),h=H[cl.i],code=CODE[cl.i];const c=countryById(O[cl.i]);
+  const elev=h>=0?Math.round(h*8800)+' م':'عمق '+Math.round(-h*11000)+' م';
+  const la=hit.lat*180/PI,lo=hit.lon*180/PI;
+  cardEl(`<h4><span>${BNAME[code]}</span><button class="ibtn" data-x style="width:32px;height:32px">✕</button></h4>
+  <div class="kv"><span>الإحداثيات</span><b dir="ltr" style="text-align:right">${Math.abs(la).toFixed(1)}°${la>=0?'N':'S'} ${Math.abs(lo).toFixed(1)}°${lo>=0?'E':'W'}</b><span>الارتفاع</span><b>${elev}</b><span>التبعية</span><b>${c?esc(c.emblem+' '+c.name):'أرض غير مستعمرة'}</b>${h>=0?`<span>الخصوبة</span><b>${Math.round((FERT[code]||0)*100/1.7)}٪</b>`:''}</div>`);
+  $('card').querySelector('[data-x]').onclick=hideCard}
+function cityCard(city){const c=countryById(city.owner);
+  const el=cardEl(`<h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f0cf8a" stroke-width="1.8">${city.cap?ICON.capital:ICON.city}</svg><span>${esc(city.name)}</span><button class="ibtn" data-x style="width:32px;height:32px">✕</button></h4>
+  <div class="kv"><span>النوع</span><b>${city.cap?'عاصمة':'مدينة'}</b><span>الدولة</span><b>${c?esc(c.emblem+' '+c.name):'مستقلة'}</b><span>السكان</span><b>${fmtPop(city.pop)}</b><span>تأسست</span><b>السنة ${city.founded||0}</b></div>
+  <div class="acts"><button class="btn" data-r>إعادة تسمية</button>${!city.cap&&c?'<button class="btn" data-c>اجعلها عاصمة</button>':''}<button class="btn danger" data-d>هدم</button></div>`);
+  el.querySelector('[data-x]').onclick=hideCard;
+  el.querySelector('[data-r]').onclick=()=>askText('اسم المدينة','',city.name,v=>{beginEdit();city.name=v;endEdit();need=true;cityCard(city)});
+  const cb=el.querySelector('[data-c]');if(cb)cb.onclick=()=>{beginEdit();cities.forEach(x=>{if(x.owner===city.owner)x.cap=false});city.cap=true;endEdit();need=true;cityCard(city);toast(city.name+' عاصمة جديدة')};
+  el.querySelector('[data-d]').onclick=()=>{beginEdit();cities=cities.filter(x=>x!==city);endEdit();need=true;hideCard();toast('هُدمت '+city.name)};
+}
+function countryCard(c){const n=cities.filter(x=>x.owner===c.id).length;
+  const el=cardEl(`<h4><i class="sw" style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:${c.color};font-style:normal;font-size:14px;color:#fff">${c.emblem}</i><span>${esc(c.name)}</span><button class="ibtn" data-x style="width:32px;height:32px">✕</button></h4>
+  <div class="kv"><span>العصر</span><b>${ERAS[Math.min(ERAS.length-1,Math.floor(c.tech))]}</b><span>السكان</span><b>${c.pop?fmtPop(c.pop):'—'}</b><span>المساحة</span><b>${fmtArea(c.area)}</b><span>المدن</span><b>${n}</b><span>الاستقرار</span><b>${Math.round(c.stab)}٪</b></div>`);
+  el.querySelector('[data-x]').onclick=hideCard}
+
+/* ================= SHEETS / MODALS ================= */
+function openSheet(id){closeSheets(true);$(id).classList.add('show');$('scrim').classList.add('show');hideCard()}
+function closeSheets(keep){document.querySelectorAll('.sheet.show').forEach(s=>s.classList.remove('show'));if(!keep)$('scrim').classList.remove('show')}
+$('scrim').onclick=()=>closeSheets();document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>closeSheets());
+let modalEl=null;
+function modal(html){closeModal();modalEl=document.createElement('div');modalEl.className='modal';modalEl.innerHTML=`<div class="dialog">${html}</div>`;document.body.appendChild(modalEl);modalEl.addEventListener('click',e=>{if(e.target===modalEl)closeModal()});return modalEl}
+function closeModal(){if(modalEl){modalEl.remove();modalEl=null}}
+function askText(title,desc,val,cb){const m=modal(`<h3>${title}</h3>${desc?`<p>${desc}</p>`:''}<input class="input" id="askIn" maxlength="32"><div class="acts"><button class="btn pri" data-ok>حفظ</button><button class="btn" data-no>إلغاء</button></div>`);
+  const inp=m.querySelector('#askIn');inp.value=val||'';setTimeout(()=>inp.focus(),50);
+  const ok=()=>{const v=inp.value.trim();if(!v)return;closeModal();cb(v)};m.querySelector('[data-ok]').onclick=ok;inp.onkeydown=e=>{if(e.key==='Enter')ok()};m.querySelector('[data-no]').onclick=closeModal}
+function confirmBox(title,desc,okTxt,cb){const m=modal(`<h3>${title}</h3><p>${desc}</p><div class="acts"><button class="btn pri" data-ok>${okTxt}</button><button class="btn" data-no>إلغاء</button></div>`);m.querySelector('[data-ok]').onclick=()=>{closeModal();cb()};m.querySelector('[data-no]').onclick=closeModal}
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200)}
+
+/* countries sheet */
+let cfEdit=null,cfColor=PALETTE[0],cfEmb=EMBLEMS[0];
+function openCountries(prompt){renderCountryList();setupForm(null);openSheet('countrySheet');if(prompt&&!countries.length)toast('أنشئ دولتك الأولى لترسم أقاليمها')}
+function renderCountryList(){const L=$('countryList');
+  if(!countries.length){L.innerHTML='<div class="empty" style="padding:0">لا توجد دول بعد. اختر اسماً ولوناً وشعاراً بالأسفل.</div>';return}
+  L.innerHTML='';countries.forEach(c=>{const n=cities.filter(x=>x.owner===c.id).length;const b=document.createElement('div');b.className='row'+(c.id===activeCountry?' on':'');
+    b.innerHTML=`<i class="sw" style="background:${c.color};font-style:normal">${c.emblem}</i><div class="t"><b></b><small>${fmtArea(c.area)} · ${n} مدن${c.pop?' · '+fmtPop(c.pop):''}</small></div><button class="btn" style="min-height:36px;padding:6px 10px;font-size:12px" data-e>تعديل</button>`;
+    b.querySelector('b').textContent=c.name;
+    b.onclick=e=>{if(e.target.closest('[data-e]')){setupForm(c);return}selectCountry(c.id,true);closeSheets()};L.appendChild(b)})}
+function setupForm(c){cfEdit=c;$('cfTitle').textContent=c?'تعديل '+c.name:'دولة جديدة';$('cfName').value=c?c.name:countryName();
+  const used=countries.map(x=>x.color);cfColor=c?c.color:(PALETTE.find(p=>!used.includes(p))||pickR(PALETTE));cfEmb=c?c.emblem:EMBLEMS[countries.length%EMBLEMS.length];
+  $('cfSave').textContent=c?'حفظ التعديل':'إنشاء الدولة';$('cfDel').hidden=!c;renderPickers()}
+function renderPickers(){$('cfColors').innerHTML=PALETTE.map(p=>`<button style="background:${p}" class="${p===cfColor?'on':''}" data-c="${p}" aria-label="لون"></button>`).join('');
+  $('cfColors').querySelectorAll('button').forEach(b=>b.onclick=()=>{cfColor=b.dataset.c;renderPickers()});
+  $('cfEmblems').innerHTML=EMBLEMS.map(p=>`<button class="${p===cfEmb?'on':''}" data-e="${p}">${p}</button>`).join('');
+  $('cfEmblems').querySelectorAll('button').forEach(b=>b.onclick=()=>{cfEmb=b.dataset.e;renderPickers()})}
+$('cfRoll').onclick=()=>{$('cfName').value=countryName()};
+$('cfSave').onclick=()=>{const name=$('cfName').value.trim();if(!name){toast('اكتب اسم الدولة');return}
+  if(countries.some(c=>c.name===name&&c!==cfEdit)){toast('يوجد دولة بهذا الاسم');return}
+  beginEdit();
+  if(cfEdit){cfEdit.name=name;cfEdit.color=cfColor;cfEdit.rgb=hex2rgb(cfColor);cfEdit.emblem=cfEmb;endEdit();shadeRows(0,GH-1);toast('حُفظت '+name)}
+  else{const c=newCountry(name,cfColor,cfEmb);if(!c){toast('بلغت الحد الأقصى للدول');return}endEdit();activeCountry=c.id;toast('تأسست '+name+'، ارسم أقاليمها الآن');
+    if(activeTab!=='politics'){activeTab='politics';activeTool='territory'}else if(!TAPTOOLS[activeTool]&&activeTool!=='territory')activeTool='territory';renderTabs();closeSheets()}
+  renderCountryList();renderChip();renderRanks();need=true;setupForm(cfEdit?cfEdit:null)};
+$('cfDel').onclick=()=>{const c=cfEdit;if(!c)return;confirmBox('حذف '+c.name+'؟','ستُزال أقاليمها ومدنها من الخريطة. يمكنك التراجع بعدها.','حذف',()=>{
+  beginEdit();for(let i=0;i<N;i++)if(O[i]===c.id)O[i]=0;editY0=0;editY1=GH-1;countries=countries.filter(x=>x!==c);cities=cities.filter(x=>x.owner!==c.id);endEdit();
+  if(activeCountry===c.id)activeCountry=0;shadeRows(0,GH-1);scanDirty=true;renderCountryList();setupForm(null);renderChip();renderRanks();toast('حُذفت '+c.name)})};
+function selectCountry(id,fly){activeCountry=id;const c=countryById(id);renderChip();renderRanks();
+  if(mode==='civ'){highlight=id;shadeRows(0,GH-1)}
+  if(fly&&c&&c.cells)focusTo(c.clat,c.clon,Math.min(dist,1+(homeDist()-1)*.7))}
+function afterObjs(){if(!countryById(activeCountry))activeCountry=0;renderChip();renderRanks();need=true}
+
+/* ================= MISSIONS / XP ================= */
+const LEVELS=[0,80,200,380,620,920,1300,1800,2400];
+const TITLES=['رحّالة','مستكشف','رسّام خرائط','جغرافي','مؤسس ممالك','صانع أمم','حكيم العصور','حارس الكوكب','خالق العوالم'];
+const MISSIONS=[
+  {id:'land',t:'ارفع أول قارة',d:'اجعل اليابسة تغطي ١٠٪ من الكوكب',xp:40,ok:()=>G.landPct>=10},
+  {id:'mount',t:'انحت سلسلة جبال',d:'أنشئ قمماً وجبالاً صخرية',xp:40,ok:()=>G.mount>=1500},
+  {id:'forest',t:'ازرع غابة كبرى',d:'غطِّ مساحة واسعة بالغابات',xp:40,ok:()=>G.forest>=4000},
+  {id:'river',t:'أجرِ نهراً',d:'ارسم نهراً يشق اليابسة',xp:40,ok:()=>G.river>=120},
+  {id:'state',t:'أسّس أول دولة',d:'ارسم إقليماً لدولة',xp:60,ok:()=>countries.some(c=>c.cells>=300)},
+  {id:'capital',t:'ضع عاصمة',d:'اختر عاصمة لإحدى دولك',xp:50,ok:()=>cities.some(c=>c.cap)},
+  {id:'cities',t:'شبكة مدن',d:'ابنِ ٨ مدن على كوكبك',xp:60,ok:()=>cities.length>=8},
+  {id:'multi',t:'عالم متعدد الأمم',d:'أوجد ٤ دول لكل منها إقليم',xp:80,ok:()=>countries.filter(c=>c.cells>=200).length>=4},
+  {id:'label',t:'سمِّ بحراً',d:'أضف تسمية على الخريطة',xp:30,ok:()=>labels.length>=1},
+  {id:'time',t:'أطلق عجلة الزمن',d:'تجاوز السنة ٢٠٠ في وضع الحضارة',xp:80,ok:()=>sim.year>=200},
+  {id:'iron',t:'عصر الحديد',d:'أوصل دولة إلى عصر الحديد',xp:100,ok:()=>countries.some(c=>c.tech>=2)},
+  {id:'empire',t:'إمبراطورية',d:'دولة يتجاوز سكانها ٣٠ مليوناً',xp:150,ok:()=>countries.some(c=>c.pop>=30000)},
+  {id:'renai',t:'نهضة',d:'أوصل دولة إلى عصر النهضة',xp:200,ok:()=>countries.some(c=>c.tech>=4)},
+  {id:'space',t:'نحو النجوم',d:'أوصل دولة إلى عصر الفضاء',xp:400,ok:()=>countries.some(c=>c.tech>=7)}
+];
+function levelOf(xp){let l=0;while(l<LEVELS.length-1&&xp>=LEVELS[l+1])l++;return l}
+function renderXP(){const l=levelOf(prog.xp);$('lvlNum').textContent=(l+1).toLocaleString('ar-EG');$('lvlTitle').textContent=TITLES[l];
+  const a=LEVELS[l],b=LEVELS[l+1]||a+1;$('xpFill').style.width=(l>=LEVELS.length-1?100:(prog.xp-a)/(b-a)*100)+'%'}
+let checkT=null;function checkSoon(){clearTimeout(checkT);checkT=setTimeout(checkMissions,700)}
+function checkMissions(silent){if(scanDirty)scan();let gained=0;const before=levelOf(prog.xp);
+  for(const m of MISSIONS){if(prog.done[m.id])continue;if(m.ok()){prog.done[m.id]=sim.year||1;if(silent===true){prog.done[m.id]=-1;continue}prog.xp+=m.xp;gained++;toast(`مهمة منجزة: ${m.t} (+${m.xp})`);buzz([10,40,10])}}
+  if(gained){renderXP();const after=levelOf(prog.xp);if(after>before)levelUp(after);dirtySave=true;if($('questSheet').classList.contains('show'))renderQuests()}}
+function levelUp(l){const d=document.createElement('div');d.className='lvlup';d.innerHTML=`<div><b>المستوى ${(l+1).toLocaleString('ar-EG')}</b><small>${TITLES[l]}</small></div>`;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
+function renderQuests(){const done=MISSIONS.filter(m=>prog.done[m.id]).length;
+  $('questList').innerHTML=`<div class="empty" style="padding:0 0 4px">أنجزت ${done.toLocaleString('ar-EG')} من ${MISSIONS.length.toLocaleString('ar-EG')} مهمة · ${prog.xp.toLocaleString('ar-EG')} نقطة خبرة</div>`+
+  MISSIONS.map(m=>`<div class="mission ${prog.done[m.id]?'done':''}"><span class="ck">${prog.done[m.id]?'✓':''}</span><div class="t"><b>${m.t}</b><small>${prog.done[m.id]===-1?'كانت جاهزة في هذا الكوكب':m.d}</small></div><em>${prog.done[m.id]===-1?'—':'+'+m.xp}</em></div>`).join('')}
+$('questBtn').onclick=()=>{checkMissions();renderQuests();openSheet('questSheet')};
+
+/* ================= CIVILIZATION SIM ================= */
+const ERAS=['العصر الحجري','عصر البرونز','عصر الحديد','العصور الوسطى','عصر النهضة','العصر الصناعي','العصر الحديث','عصر الفضاء'];
+function logEv(txt){sim.log.unshift({y:sim.year,t:txt});if(sim.log.length>60)sim.log.length=60;
+  const ch=$('chron');const d=document.createElement('div');d.innerHTML=`<small>السنة ${sim.year.toLocaleString('ar-EG')}</small>`;d.append(document.createTextNode(txt));ch.prepend(d);while(ch.children.length>(innerWidth<600?2:3))ch.lastChild.remove();
+  clearTimeout(d._t);setTimeout(()=>{d.style.transition='opacity .6s';d.style.opacity='0';setTimeout(()=>d.remove(),700)},7000)}
+const EVENTS=[
+  {p:.25,t:'عصر ذهبي من الرخاء',f:c=>{c.stab=Math.min(100,c.stab+15);c.tech+=.1}},
+  {p:.15,t:'مجاعة تضرب الأرياف',f:c=>{c.pop*=.88;c.stab-=10}},
+  {p:.1,t:'وباء يجتاح المدن',f:c=>{c.pop*=.84;c.stab-=8}},
+  {p:.2,t:'اكتشاف علمي يغيّر المجتمع',f:c=>{c.tech+=.35}},
+  {p:.1,t:'ثورة تهز أركان الحكم',f:c=>{c.stab-=25}},
+  {p:.15,t:'احتفالات وطنية كبرى',f:c=>{c.stab=Math.min(100,c.stab+8)}},
+  {p:.1,t:'اكتشاف مناجم ذهب',f:c=>{c.tech+=.15;c.stab+=5}}
+];
+let simT=0;
+function simTick(){
+  sim.year+=5;
+  const {S,contacts}=scan();let changed=false;
+  for(const c of countries){const s=S[c.id];if(!s||!s.cells){c.pop*=.6;c.K=0;continue}
+    const myC=cities.filter(x=>x.owner===c.id),hasCap=myC.some(x=>x.cap);
+    const bonus=1+Math.min(.8,myC.length*.07)+(hasCap?.15:0);
+    const K=Math.max(1,s.fert*30*bonus*(1+c.tech*.45));c.K=K;
+    if(c.pop<=0)c.pop=Math.max(5,K*.05);
+    const r=.07*(.45+c.stab/100);c.pop=Math.max(1,c.pop+r*c.pop*(1-c.pop/K));
+    const prevEra=Math.floor(c.tech);
+    c.tech+=.006*(1+Math.log10(1+c.pop/50))*(1+myC.length*.08)*(.5+c.stab/120)*(s.coast?1.12:1)*(s.river?1.1:1);
+    const era=Math.floor(c.tech);if(era>prevEra&&era<ERAS.length)logEv(`${c.name} تدخل ${ERAS[era]}`);
+    c.stab=clamp(c.stab+(Math.random()-.5)*5+(58-c.stab)*.06,5,100);
+    c.wealth=c.pop*(.4+.3*c.tech);
+    // city pops
+    for(const ct of myC){ct.pop=Math.max(ct.pop,0)+((c.pop/Math.max(1,myC.length))*(ct.cap?.22:.1)-ct.pop)*.08}
+    // found new city
+    const want=1+Math.floor(Math.sqrt(c.pop/300));
+    if(myC.length<want&&s.own.length&&Math.random()<.35){let best=-1,bs=-1;
+      for(let k=0;k<12;k++){const i=s.own[(Math.random()*s.own.length)|0];const y=(i/GW)|0,x=i%GW;
+        let sc=(FERT[CODE[i]]||0)+((H[i-1]<0||H[i+1]<0)?.8:0)+(CODE[i]===C.RIVER?1:0);
+        const la=rowLat[y],lo=colLon[x];if(cities.some(q=>Math.abs(q.lat-la)<.06&&Math.abs(q.lon-lo)<.06/Math.max(.2,Math.cos(la))))sc-=5;
+        if(sc>bs){bs=sc;best=i}}
+      if(best>=0&&bs>0){const y=(best/GW)|0,x=best%GW;const coast=H[best-1]<0||H[best+1]<0;const nm=cityName(CODE[best],coast);
+        cities.push({id:Date.now()+Math.random(),lat:rowLat[y],lon:colLon[x],name:nm,cap:!myC.some(q=>q.cap),owner:c.id,pop:5,founded:sim.year});logEv(`${c.name} تؤسس مدينة ${nm}`);need=true}}
+    // expansion
+    if(sim.expand&&c.pop>.6*K&&s.cand.length&&c.tech>=.15){const n=3+Math.floor(c.tech*2);
+      for(let k=0;k<n;k++){const j=s.cand[(Math.random()*s.cand.length)|0];const y=(j/GW)|0,x=j%GW;
+        brush(rowLat[y],colLon[x],(.7+Math.random()*.8)*PI/180,(i,w)=>{if(w>.3&&O[i]===0&&H[i]>=0&&Math.random()<.85)O[i]=c.id})}changed=true}
+    // events
+    if(Math.random()<.035){let r2=Math.random(),acc=0;for(const ev of EVENTS){acc+=ev.p;if(r2<acc){ev.f(c);c.stab=clamp(c.stab,5,100);logEv(`${c.name}: ${ev.t}`);break}}}
+  }
+  // border wars
+  if(sim.war)for(const k in contacts){const ct=contacts[k];if(ct.n<6||Math.random()>.03)continue;
+    const A=countryById(ct.a),Bc=countryById(ct.b);if(!A||!Bc||A.pop<.6*A.K&&Bc.pop<.6*Bc.K)continue;
+    const pa=A.wealth*(A.stab/50)*(.6+Math.random()),pb=Bc.wealth*(Bc.stab/50)*(.6+Math.random());
+    const [W,L]=pa>pb?[A,Bc]:[Bc,A];
+    const idx=(Math.random()*(ct.cells.length/2)|0)*2;const cell=O[ct.cells[idx]]===L.id?ct.cells[idx]:ct.cells[idx+1];
+    const y=(cell/GW)|0,x=cell%GW;const rad=(1+Math.random()*1.4)*PI/180;let taken=0;
+    brush(rowLat[y],colLon[x],rad,(i,w)=>{if(w>.25&&O[i]===L.id){O[i]=W.id;taken++}});
+    for(const q of cities)if(q.owner===L.id){const cc=cellOf(q.lat,q.lon);if(O[cc.i]===W.id){q.owner=W.id;q.cap=false;logEv(`${W.name} تستولي على ${q.name}`)}}
+    if(taken){W.stab=Math.max(5,W.stab-4);L.stab=Math.max(5,L.stab-12);L.pop*=.95;logEv(`حرب حدودية بين ${A.name} و${Bc.name}، والغلبة لـ${W.name}`);changed=true}}
+  if(changed||pendingShade){flushShade()}
+  renderRanks();renderYear();checkSoon();dirtySave=true;need=true;
+}
+function renderYear(){$('yearTxt').textContent='السنة '+sim.year.toLocaleString('ar-EG');
+  const top=countries.reduce((m,c)=>c.tech>(m?m.tech:-1)?c:m,null);$('eraTxt').textContent=top&&top.pop?`أعرق الحضارات في ${ERAS[Math.min(7,Math.floor(top.tech))]}`:'قبل فجر التاريخ'}
+function renderRanks(){const R_=$('ranks');if(!R_)return;
+  const live=countries.filter(c=>c.cells>0);
+  if(!live.length){R_.innerHTML='<div class="empty">لا توجد دول على الكوكب بعد. ارجع إلى وضع البناء، أنشئ دولة من تبويب «الدول» وارسم إقليمها، ثم شغّل الزمن.</div>';return}
+  const arr=live.slice().sort((a,b)=>(b.wealth||b.area)-(a.wealth||a.area));
+  R_.innerHTML=arr.map((c,ix)=>{const st=c.stab,sc=st>60?'var(--good)':st>30?'var(--warn)':'var(--bad)';
+    return `<button class="rank ${c.id===activeCountry?'on':''}" data-id="${c.id}"><div class="rh"><small>${(ix+1).toLocaleString('ar-EG')}</small><i class="sw" style="background:${c.color};font-style:normal">${c.emblem}</i><span>${esc(c.name)}</span></div><small>${c.pop?fmtPop(c.pop):'لم تُستوطن'} · ${ERAS[Math.min(7,Math.floor(c.tech))]}</small><div class="bar"><i style="width:${st}%;background:${sc}"></i></div></button>`}).join('');
+  R_.querySelectorAll('.rank').forEach(b=>b.onclick=()=>{const c=countryById(+b.dataset.id);selectCountry(c.id,true);countryCard(c)})}
+function setPlay(on){sim.running=on;$('playIco').innerHTML=on?'<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>':'<path d="M8 5v14l11-7z"/>';$('playBtn').setAttribute('aria-label',on?'إيقاف الزمن':'تشغيل الزمن')}
+$('playBtn').onclick=()=>{if(!countries.some(c=>c.cells>0)){toast('لا توجد دول لتنمو بعد');return}setPlay(!sim.running);buzz(10)};
+$('speed').querySelectorAll('button').forEach(b=>b.onclick=()=>{sim.speed=+b.dataset.s;$('speed').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))});
+$('expandTog').onchange=e=>sim.expand=e.target.checked;$('warTog').onchange=e=>sim.war=e.target.checked;
+$('civCountries').onclick=()=>openCountries();
+function setMode(m){mode=m;$('modeBuild').classList.toggle('on',m==='build');$('modeCiv').classList.toggle('on',m==='civ');
+  $('buildTray').hidden=m!=='build';$('civTray').hidden=m!=='civ';$('undoBtn').hidden=$('redoBtn').hidden=m!=='build';
+  hideCard();cursor=null;
+  if(m==='civ'){scan();renderRanks();renderYear();highlight=activeCountry;shadeRows(0,GH-1)}else{setPlay(false);highlight=0;shadeRows(0,GH-1)}
+  layoutView();need=true}
+$('modeBuild').onclick=()=>setMode('build');$('modeCiv').onclick=()=>setMode('civ');
+
+/* ================= SEED CIVS ================= */
+function seedCivs(n){scan();const landCells=[];const r=rng(world.seed+77);
+  for(let k=0;k<4000&&landCells.length<400;k++){const i=(r()*N)|0;const y=(i/GW)|0;if(H[i]>.02&&H[i]<.4&&Math.abs(rowLat[y])<1.05&&(FERT[CODE[i]]||0)>.4)landCells.push(i)}
+  const chosen=[];for(const i of landCells){if(chosen.length>=n)break;const y=(i/GW)|0,x=i%GW;const v=lonlat2v(rowLat[y],colLon[x]);
+    if(chosen.every(c=>{const w=lonlat2v(rowLat[(c/GW)|0],colLon[c%GW]);return v[0]*w[0]+v[1]*w[1]+v[2]*w[2]<Math.cos(.55)}))chosen.push(i)}
+  chosen.forEach((i,k)=>{const y=(i/GW)|0,x=i%GW;const c=newCountry(countryName(),PALETTE[k],EMBLEMS[k]);
+    brush(rowLat[y],colLon[x],(3+r()*2.5)*PI/180,(j,w)=>{if(w>.15&&H[j]>=0&&O[j]===0&&r()<.97)O[j]=c.id});
+    const coast=H[i-1]<0||H[i+1]<0;cities.push({id:Date.now()+k,lat:rowLat[y],lon:colLon[x],name:cityName(CODE[i],coast),cap:true,owner:c.id,pop:30,founded:0})});
+  editY1=-1;pendingShade=null;if(chosen.length)activeCountry=countries[0].id}
+
+/* ================= SAVE / LOAD (IndexedDB) ================= */
+let db=null,dirtySave=false;
+function openDB(){return new Promise(res=>{try{const rq=indexedDB.open('atlas-forge',1);rq.onupgradeneeded=()=>rq.result.createObjectStore('worlds',{keyPath:'id'});rq.onsuccess=()=>{db=rq.result;res(db)};rq.onerror=()=>res(null)}catch(e){res(null)}})}
+function q8(a){const o=new Uint8Array(a.length);for(let i=0;i<a.length;i++)o[i]=clamp(a[i]*255,0,255);return o}
+function dq8(a){const o=new Float32Array(a.length);for(let i=0;i<a.length;i++)o[i]=a[i]/255;return o}
+function thumb(){const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d');const s=Math.min(glc.width,glc.height)*(1/Math.sqrt(dist*dist-1))/TANF;
+  const cx=glc.width/2,cy=glc.height/2*(1-offY),r=s/2*1.04;try{g.drawImage(glc,cx-r,cy-r,2*r,2*r,0,0,96,96)}catch(e){}return c.toDataURL('image/jpeg',.7)}
+function packWorld(){return{id:world.id,name:$('worldName').value.trim()||'عالمي',seed:world.seed,preset:world.preset,temp:world.temp,created:world.created,updated:Date.now(),
+  h:new Int16Array(H.map(v=>v*32767)),b:B.slice(),o:O.slice(),mo:q8(MO),dt:q8(DT),countries,cities,labels,sim:{year:sim.year,expand:sim.expand,war:sim.war,log:sim.log.slice(0,20)},prog,activeCountry,thumb:thumb()}}
+function unpackWorld(d){world={id:d.id,name:d.name,seed:d.seed,preset:d.preset,temp:d.temp||0,created:d.created||Date.now()};
+  const h=d.h;for(let i=0;i<N;i++)H[i]=h[i]/32767;B.set(d.b);O.set(d.o);MO.set(dq8(d.mo));DT.set(dq8(d.dt));
+  countries=d.countries||[];countries.forEach(c=>c.rgb=hex2rgb(c.color));cities=d.cities||[];labels=d.labels||[];
+  sim=Object.assign({year:0,running:false,speed:1,expand:true,war:true,log:[]},d.sim||{},{running:false});prog=d.prog||{xp:0,done:{}};activeCountry=d.activeCountry||0;
+  $('worldName').value=world.name;undoS=[];redoS=[];syncUndo();shadeRows(0,GH-1);scan();renderXP();renderTabs();renderYear();$('expandTog').checked=sim.expand;$('warTog').checked=sim.war}
+async function saveWorld(silent){if(!db){if(!silent)toast('الحفظ غير متاح في هذا المتصفح، استخدم «تصدير ملف»');return}
+  if(!world.id)world.id='w'+Date.now();
+  try{const tx=db.transaction('worlds','readwrite');tx.objectStore('worlds').put(packWorld());await new Promise((r,j)=>{tx.oncomplete=r;tx.onerror=j});dirtySave=false;if(!silent)toast('حُفظ العالم')}
+  catch(e){if(!silent)toast('تعذّر الحفظ، المساحة ممتلئة؟ جرّب «تصدير ملف»')}}
+function listWorlds(){return new Promise(res=>{if(!db)return res([]);try{const rq=db.transaction('worlds').objectStore('worlds').getAll();rq.onsuccess=()=>res(rq.result.sort((a,b)=>b.updated-a.updated));rq.onerror=()=>res([])}catch(e){res([])}})}
+function delWorld(id){return new Promise(res=>{try{const tx=db.transaction('worlds','readwrite');tx.objectStore('worlds').delete(id);tx.oncomplete=res}catch(e){res()}})}
+setInterval(()=>{if(dirtySave&&world.id&&$('start').hidden)saveWorld(true)},30000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&dirtySave&&world.id)saveWorld(true)});
+$('mSave').onclick=()=>{saveWorld(false);closeSheets()};
+$('worldName').onchange=()=>{dirtySave=true};
+
+/* export / import */
+function b64(u8){let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)}
+function ub64(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000)}
+const fname=()=>($('worldName').value.trim()||'atlas').replace(/[^\w؀-ۿ-]+/g,'_');
+$('mExport').onclick=()=>{const w=packWorld();const out=Object.assign({},w,{format:'ATLAS_FORGE',version:3,h:b64(new Uint8Array(w.h.buffer)),b:b64(w.b),o:b64(w.o),mo:b64(w.mo),dt:b64(w.dt)});
+  const blob=new Blob([JSON.stringify(out)],{type:'application/json'});closeSheets();
+  const m=modal(`<h3>تصدير العالم</h3><p>ملف واحد (${(blob.size/1048576).toFixed(1)} م.ب) يحمل الكوكب بكل دوله ومدنه وتاريخه. افتحه لاحقاً من «فتح ملف».</p><div class="acts"><button class="btn pri" data-ok>تنزيل الملف</button><button class="btn" data-no>إغلاق</button></div><p style="margin-top:10px;font-size:11.5px">إن لم يبدأ التنزيل داخل نافذة المعاينة، افتح اللعبة كملف مستقل في المتصفح.</p>`);
+  m.querySelector('[data-ok]').onclick=()=>{download(fname()+'.atlas.json',blob);toast('بدأ التنزيل')};m.querySelector('[data-no]').onclick=closeModal};
+$('mImport').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);
+  if(d.format==='ATLAS_FORGE'){busy(true);setTimeout(()=>{unpackWorld(Object.assign({},d,{id:'w'+Date.now(),h:new Int16Array(ub64(d.h).buffer),b:ub64(d.b),o:ub64(d.o),mo:ub64(d.mo),dt:ub64(d.dt)}));enterGame();busy(false);toast('فُتح '+world.name)},30)}
+  else if(d.format==='ATLAS_WORLD'&&d.texture)importLegacy(d);else throw 0}catch(err){toast('هذا الملف ليس عالماً من أطلس')}};rd.readAsText(f)};
+function importLegacy(d){busy(true);const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=GW;c.height=GH;const g=c.getContext('2d');g.drawImage(im,0,0,GW,GH);const px=g.getImageData(0,0,GW,GH).data;
+  generate('ocean',world.seed||1);
+  for(let i=0;i<N;i++){const r=px[i*4],gg=px[i*4+1],b=px[i*4+2];const water=b>r+25&&b>gg-30&&r<90;if(!water){H[i]=.12;if(gg>r+15&&gg<120)B[i]=2;else if(r>190&&gg>160&&b<140)B[i]=3;else if(r>215&&gg>225&&b>225)B[i]=4;else if(r>110&&r<130&&gg<110)H[i]=.55}}
+  (d.countries||[]).forEach((c,k)=>newCountry(c.name,PALETTE[k%12],EMBLEMS[k%12]));
+  (d.cities||[]).forEach(q=>cities.push({id:Math.random(),lat:q.lat*PI/180,lon:q.lon*PI/180,name:q.type==='capital'?'عاصمة':word(2)+pickR(EN_T),cap:q.type==='capital',owner:0,pop:10,founded:0}));
+  (d.labels||[]).forEach(l=>labels.push({lat:l.lat*PI/180,lon:l.lon*PI/180,text:l.text,id:Math.random()}));
+  world.id='w'+Date.now();$('worldName').value=d.worldName||'عالمي';shadeRows(0,GH-1);scan();enterGame();busy(false);toast('حُوّل عالمك القديم إلى الصيغة الجديدة')};im.onerror=()=>{busy(false);toast('تعذّر قراءة صورة الخريطة')};im.src=d.texture}
+
+/* image exports */
+$('mGlobe').onclick=()=>{closeSheets();draw(performance.now());const c=document.createElement('canvas');c.width=glc.width;c.height=glc.height;const g=c.getContext('2d');g.drawImage(glc,0,0);g.drawImage(ov,0,0);
+  g.font=`700 ${28*dpr}px "Reem Kufi",Cairo`;g.fillStyle='#f0cf8a';g.textAlign='center';g.direction='rtl';g.fillText($('worldName').value,c.width/2,c.height-30*dpr);showImage(c,'صورة الكوكب')};
+$('mMap').onclick=()=>{closeSheets();const S=2,c=document.createElement('canvas');c.width=GW*S;c.height=GH*S;const g=c.getContext('2d');
+  const id=new ImageData(GW,GH);for(let i=0;i<N;i++){id.data[i*4]=RGBA[i*4];id.data[i*4+1]=RGBA[i*4+1];id.data[i*4+2]=RGBA[i*4+2];id.data[i*4+3]=255}
+  const t=document.createElement('canvas');t.width=GW;t.height=GH;t.getContext('2d').putImageData(id,0,0);g.imageSmoothingQuality='high';g.drawImage(t,0,0,c.width,c.height);
+  const P=(la,lo)=>[(lo+PI)/TAU*c.width,(PI/2-la)/PI*c.height];g.textAlign='center';g.textBaseline='middle';g.direction='rtl';g.lineJoin='round';
+  for(const q of countries.filter(q=>q.cells>40)){const [x,y]=P(q.clat,q.clon);const fs=clamp(14+Math.sqrt(q.area)/120,18,46);g.font=`700 ${fs}px "Reem Kufi",Cairo`;g.lineWidth=5;g.strokeStyle='rgba(6,17,28,.7)';g.strokeText(q.name,x,y);g.fillStyle='#fff7e6';g.fillText(q.name,x,y)}
+  for(const q of cities){const [x,y]=P(q.lat,q.lon);g.beginPath();g.arc(x,y,q.cap?7:5,0,TAU);g.fillStyle=q.cap?'#f0cf8a':'#fff';g.strokeStyle='#06111c';g.lineWidth=2;g.fill();g.stroke();g.font=`700 ${q.cap?19:16}px Cairo`;g.lineWidth=4;g.strokeText(q.name,x,y+20);g.fillText(q.name,x,y+20)}
+  for(const l of labels){const [x,y]=P(l.lat,l.lon);g.font='italic 600 20px Cairo';g.lineWidth=4;g.strokeText(l.text,x,y);g.fillStyle='#bfe6ef';g.fillText(l.text,x,y)}
+  showImage(c,'خريطة مسطحة')};
+function showImage(c,title){const url=c.toDataURL('image/png');const m=modal(`<h3>${title}</h3><p>على الجوال: اضغط مطولاً على الصورة لحفظها.</p><img alt="${title}" src="${url}"><div class="acts"><button class="btn pri" data-ok>تنزيل PNG</button><button class="btn" data-no>إغلاق</button></div>`);
+  m.querySelector('[data-ok]').onclick=()=>{c.toBlob(b=>download(fname()+'.png',b))};m.querySelector('[data-no]').onclick=closeModal}
+function worldStats(){if(scanDirty)scan();$('worldStats').innerHTML=`<span>اليابسة</span><b>${G.landPct.toFixed(1)}٪ · ${fmtArea(G.landA||0)}</b><span>الدول</span><b>${countries.length}</b><span>المدن</span><b>${cities.length}</b><span>السنة</span><b>${sim.year}</b><span>البذرة</span><b>${world.seed} · ${PRESETS[world.preset]?PRESETS[world.preset].name:''}</b>`}
+$('menuBtn').onclick=()=>{worldStats();openSheet('menuSheet')};
+
+/* ================= START SCREEN ================= */
+let chosenPreset='continents';
+function busy(on){let b=document.querySelector('.busy');if(on&&!b){b=document.createElement('div');b.className='busy';b.innerHTML='<div><span class="spin"></span>يتشكّل الكوكب…</div>';document.body.appendChild(b)}else if(!on&&b)b.remove()}
+function renderPresets(){$('presets').innerHTML=Object.entries(PRESETS).map(([k,p])=>`<button class="preset ${k===chosenPreset?'on':''}" data-p="${k}"><canvas width="88" height="88"></canvas>${p.name}</button>`).join('');
+  $('presets').querySelectorAll('.preset').forEach(b=>{const g=b.querySelector('canvas').getContext('2d');const k=b.dataset.p,P=PRESETS[k];
+    const gr=g.createRadialGradient(34,30,4,44,44,44);gr.addColorStop(0,'#3a8fb0');gr.addColorStop(1,'#0b2c4a');g.fillStyle=gr;g.beginPath();g.arc(44,44,44,0,TAU);g.fill();
+    const r=rng(k.length*31+7);const land=k==='dune'?'#d6b476':k==='ice'?'#e6eef0':'#8fac68';const blobs=P.blank?0:k==='archipelago'?14:k==='pangaea'?1:4;
+    g.save();g.beginPath();g.arc(44,44,44,0,TAU);g.clip();g.fillStyle=land;for(let i=0;i<blobs;i++){g.beginPath();const s=k==='archipelago'?6:k==='pangaea'?28:16;g.ellipse(14+r()*60,14+r()*60,s*(.6+r()*.6),s*(.5+r()*.5),r()*3,0,TAU);g.fill()}g.restore();
+    b.onclick=()=>{chosenPreset=k;renderPresets()}})}
+$('seedRoll').onclick=()=>{$('seed').value=(Math.random()*1e8|0)};
+$('forge').onclick=()=>{busy(true);setTimeout(()=>{const s=parseInt($('seed').value)||((Math.random()*1e8)|0);
+  generate(chosenPreset,s);world.id='w'+Date.now();world.created=Date.now();
+  shadeRows(0,GH-1);if($('seedCivs').checked&&!PRESETS[chosenPreset].blank){seedCivs(4);shadeRows(0,GH-1)}
+  $('worldName').value=(PRESETS[chosenPreset].blank?'عالم':'كوكب')+' '+word(2)+pickR(EN_C);scan();renderXP();renderTabs();renderYear();syncUndo();
+  checkMissions(true);renderXP();enterGame();busy(false);saveWorld(true);
+  setTimeout(()=>toast(matchMedia('(pointer:coarse)').matches?'إصبع للرسم، إصبعان للتدوير والتقريب':'الزر الأيسر للرسم، الأيمن للتدوير'),400)},40)};
+function enterGame(){$('start').hidden=true;idle=false;setMode('build');layoutView();focusTo(.3,-yaw,homeDist());checkSoon()}
+async function showStart(){closeSheets();setPlay(false);$('start').hidden=false;idle=true;layoutView();dist=homeDist()*(cw<700?1.05:.95);$('seed').value=(Math.random()*1e8|0);renderPresets();
+  const ws=await listWorlds();$('savesWrap').hidden=!ws.length;
+  $('saves').innerHTML='';ws.slice(0,5).forEach(w=>{const r=document.createElement('div');r.className='row';
+    r.innerHTML=`<img alt=""><div class="t"><b></b><small>${new Date(w.updated).toLocaleDateString('ar-EG')} · ${(w.countries||[]).length} دول · السنة ${(w.sim&&w.sim.year)||0}</small></div><button class="btn pri" data-o style="min-height:38px;padding:6px 12px">تابع</button><button class="btn" data-d aria-label="حذف" style="min-height:38px;padding:6px 10px">✕</button>`;
+    r.querySelector('img').src=w.thumb||'';r.querySelector('b').textContent=w.name;
+    r.querySelector('[data-o]').onclick=()=>{busy(true);setTimeout(()=>{unpackWorld(w);enterGame();busy(false)},30)};
+    r.querySelector('[data-d]').onclick=()=>confirmBox('حذف '+w.name+'؟','لا يمكن استرجاع العالم بعد حذفه.','حذف',async()=>{await delWorld(w.id);showStart()});
+    $('saves').appendChild(r)})}
+$('mStart').onclick=()=>{if(dirtySave&&world.id)saveWorld(true);showStart()};
+
+/* ================= LOOP ================= */
+let lastT=performance.now(),starT=0;
+function frame(t){requestAnimationFrame(frame);const dt=Math.min(50,t-lastT);lastT=t;
+  if(focusAnim){const k=clamp((t-focusAnim.t0)/700,0,1),e=1-Math.pow(1-k,3);yaw=focusAnim.y0+(focusAnim.y1-focusAnim.y0)*e;pitch=focusAnim.p0+(focusAnim.p1-focusAnim.p0)*e;dist=focusAnim.d0+(focusAnim.d1-focusAnim.d0)*e;need=true;if(k>=1)focusAnim=null}
+  if(!gest&&(Math.abs(vy)>1e-5||Math.abs(vp)>1e-5)){yaw+=vy*dt/16;pitch=clamp(pitch+vp*dt/16,-1.45,1.45);vy*=.93;vp*=.93;need=true}
+  if(idle){yaw+=dt*.00012;need=true}
+  if(mode==='civ'&&sim.running){simT+=dt;const step=900/sim.speed;if(simT>step){simT=0;simTick()}}
+  if(gest&&gest.type==='paint'){flushShade()}
+  if(texDirty){const [a,b]=texDirty;gl.texSubImage2D(gl.TEXTURE_2D,0,0,a,GW,b-a+1,gl.RGBA,gl.UNSIGNED_BYTE,RGBA.subarray(a*GW*4,(b+1)*GW*4));texDirty=null;need=true}
+  if(t-starT>120){starT=t;need=true}
+  if(need){need=false;draw(t)}
+}
+
+/* ================= BOOT ================= */
+resize();renderTabs();renderXP();syncUndo();
+generate('continents',20261105);world.id=null;shadeRows(0,GH-1);seedCivs(4);shadeRows(0,GH-1);scan();
+if(document.fonts)document.fonts.ready.then(()=>need=true);
+requestAnimationFrame(frame);
+openDB().then(()=>showStart());
+window.__atlas={H,O,B,countries:()=>countries,cities:()=>cities,scan,simTick,setMode,stamp,pick,G:()=>G,sim:()=>sim};
+})();
+</script>
+
+</body></html>
